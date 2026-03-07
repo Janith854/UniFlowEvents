@@ -1,19 +1,18 @@
 {
   "name": "uniflowevents",
   "version": "1.0.0",
-  "description": "UniFlowEvents backend",
-  "main": "backend/server.js",
+  "description": "UniFlowEvents Monorepo",
+  "private": true,
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "start": "npm run start --workspace=backend",
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "install:all": "npm install && npm install --workspace=backend && npm install --workspace=frontend"
   },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "mongoose": "^7.0.3"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.22"
+    "concurrently": "^8.2.0"
   }
 }

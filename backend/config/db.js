@@ -8,8 +8,8 @@ const connectDB = async () => {
         });
         console.log('MongoDB connection SUCCESS');
     } catch (error) {
-        console.error('MongoDB connection FAIL');
-        process.exit(1);
+        console.error(`MongoDB connection FAIL: ${error.message}`);
+        console.warn('⚠️  Server running WITHOUT database. Fix your MONGO_URI in backend/.env');
     }
 };
 
