@@ -1,1 +1,1 @@
-// TODO: Implement AnalyticsChart
+export default function AnalyticsChart() { return null; }

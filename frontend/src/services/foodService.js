@@ -1,1 +1,1 @@
-// TODO: Implement foodService
+export const createFoodOrder = async () => ({ data: [] });

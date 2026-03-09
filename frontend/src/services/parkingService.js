@@ -1,1 +1,1 @@
-// TODO: Implement parkingService
+export const createParkingReservation = async () => ({ data: [] });

@@ -1,1 +1,1 @@
-// TODO: Implement EventCard
+export default function EventCard() { return null; }

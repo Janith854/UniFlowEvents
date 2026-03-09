@@ -1,1 +1,1 @@
-// TODO: Implement eventService
+export const getEvents = async () => ({ data: [] });
