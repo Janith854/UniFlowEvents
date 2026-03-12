@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -66,3 +67,38 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+=======
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  --primary: #f59e0b;
+  --primary-hover: #fbbf24;
+  --primary-glow: rgba(245, 158, 11, 0.25);
+  --primary-glow-strong: rgba(245, 158, 11, 0.4);
+  --secondary: #22d3ee;
+  --secondary-glow: rgba(34, 211, 238, 0.25);
+  --bg-base: #09090b;
+  --bg-card: #18181b;
+  --bg-surface: #27272a;
+  --border: #3f3f46;
+  --border-subtle: #27272a;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --success: #22c55e;
+  --error: #ef4444;
+}
+html {
+  scroll-behavior: smooth;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+>>>>>>> feature/user-management

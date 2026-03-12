@@ -1,33 +1,47 @@
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { Navbar } from '../components/Navbar';
 
-function Dashboard() {
+export function Dashboard() {
     const { user } = useAuth();
 
     return (
-        <div style={{ padding: '2rem' }}>
-            <h1>Welcome, {user?.name || 'User'}!</h1>
-            <p>Role: <strong>{user?.role}</strong></p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '2rem' }}>
-                <Link to="/events" style={cardStyle}>🎉 Browse Events</Link>
-                <Link to="/food-preorder" style={cardStyle}>🍔 Food Pre-Order</Link>
-                <Link to="/parking" style={cardStyle}>🚗 Parking Reservation</Link>
-                <Link to="/feedback" style={cardStyle}>💬 Submit Feedback</Link>
-            </div>
+        <div className="min-h-screen bg-white">
+            <Navbar />
+            <main className="pt-24 px-4 pb-16">
+                <div className="max-w-6xl mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                        Welcome, {user?.name || 'User'}!
+                    </h1>
+                    <p className="text-gray-600 mb-2">
+                        Role: <strong>{user?.role}</strong>
+                    </p>
+                    <p className="text-gray-600 mb-8">
+                        Manage events, view participants, and review feedback.
+                    </p>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        <Link to="/events" className="bg-gray-50 border border-gray-200 rounded-2xl p-6 hover:bg-gray-100 transition-colors no-underline">
+                            <h2 className="font-semibold text-gray-900 mb-2">🎉 Browse Events</h2>
+                            <p className="text-sm text-gray-600">Discover and join upcoming events.</p>
+                        </Link>
+                        <Link to="/food/pre-order" className="bg-gray-50 border border-gray-200 rounded-2xl p-6 hover:bg-gray-100 transition-colors no-underline">
+                            <h2 className="font-semibold text-gray-900 mb-2">🍔 Food Pre-Order</h2>
+                            <p className="text-sm text-gray-600">Order food for your events in advance.</p>
+                        </Link>
+                        <Link to="/parking/reserve" className="bg-gray-50 border border-gray-200 rounded-2xl p-6 hover:bg-gray-100 transition-colors no-underline">
+                            <h2 className="font-semibold text-gray-900 mb-2">🚗 Parking</h2>
+                            <p className="text-sm text-gray-600">Reserve a parking slot for your event.</p>
+                        </Link>
+                        <Link to="/feedback" className="bg-gray-50 border border-gray-200 rounded-2xl p-6 hover:bg-gray-100 transition-colors no-underline">
+                            <h2 className="font-semibold text-gray-900 mb-2">💬 Feedback</h2>
+                            <p className="text-sm text-gray-600">Submit feedback for events you attended.</p>
+                        </Link>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 }
-
-const cardStyle = {
-    display: 'block',
-    padding: '1.5rem',
-    background: '#1a1a2e',
-    color: '#fff',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: '1.1rem'
-};
 
 export default Dashboard;
