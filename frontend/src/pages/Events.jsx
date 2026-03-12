@@ -1,27 +1,29 @@
-import { useEffect, useState } from 'react';
-import { getEvents } from '../services/eventService';
-import EventCard from '../components/EventCard';
+import React from 'react';
+import { Navbar } from '../components/Navbar';
+import { EventCard } from '../components/EventCard';
 
-function Events() {
-    const [events, setEvents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+export function Events() {
+  const mockEvents = [
+    { id: '1', title: 'Tech Innovation Summit' },
+    { id: '2', title: 'Spring Music Festival' }
+  ];
 
-    useEffect(() => {
-        getEvents()
-            .then(res => setEvents(res.data))
-            .catch(err => setError(err.response?.data?.error || 'Failed to load events'))
-            .finally(() => setLoading(false));
-    }, []);
-
-    if (loading) return <p style={{ padding: '2rem' }}>Loading events...</p>;
-    if (error) return <p style={{ padding: '2rem', color: 'red' }}>{error}</p>;
-
-    return (
-        <div style={{ padding: '2rem' }}>
-            <h1>Upcoming Events</h1>
-            {events.length === 0 ? <p>No events found.</p> : events.map(event => <EventCard key={event._id} event={event} />)}
+  return (
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      <main className="pt-24 px-4 pb-16">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">
+            All Events
+          </h1>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {mockEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
         </div>
-    );
+      </main>
+    </div>
+  );
 }
-export default Events;
+

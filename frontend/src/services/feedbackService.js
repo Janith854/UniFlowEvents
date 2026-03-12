@@ -1,5 +1,9 @@
-import API from './api';
+// Placeholder feedback service
 
-export const getAllFeedback = () => API.get('/feedback');
-export const createFeedback = (data) => API.post('/feedback', data);
-export const deleteFeedback = (id) => API.delete(`/feedback/${id}`);
+export async function fetchFeedbackForEvent(eventId) {
+  return Promise.resolve([
+    { id: '1', eventId, comment: 'Great event!', rating: 5 },
+    { id: '2', eventId, comment: 'Very informative.', rating: 4 }
+  ]);
+}
+
