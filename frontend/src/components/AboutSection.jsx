@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { SparklesIcon, UsersIcon, CalendarIcon } from 'lucide-react';
+import { Sparkles, Users, Calendar } from 'lucide-react';
 export function AboutSection() {
   return (
     <section id="about" className="py-24 px-4 bg-white">
@@ -27,7 +27,7 @@ export function AboutSection() {
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-amber-400/20 to-cyan-400/20 rounded-3xl blur-2xl opacity-50" />
             <img
-              src="https://images.unsplash.com/photo-1562774053-701939374585?w=800&h=600&fit=crop"
+              src="https://www.google.com/imgres?q=sliit%20malabe&imgurl=https%3A%2F%2Fstatic.sliit.lk%2Fwp-content%2Fuploads%2F2018%2F03%2FSLIIT-malabe.jpg&imgrefurl=https%3A%2F%2Fwww.sliit.lk%2Fabout%2Fabout-sliit%2F&docid=xVv0ivt9FQzeoM&tbnid=xlqlKXzUt0Cp5M&vet=12ahUKEwi0lKuyq5yTAxXfm68BHWPSAfEQnPAOegQIGBAB..i&w=1920&h=1080&hcb=2&ved=2ahUKEwi0lKuyq5yTAxXfm68BHWPSAfEQnPAOegQIGBAB"
               alt="University campus with modern architecture and green spaces"
               className="relative w-full h-[400px] lg:h-[500px] object-cover rounded-2xl border border-gray-200 shadow-lg" />
 
@@ -59,7 +59,7 @@ export function AboutSection() {
           {/* Text Column */}
           <div>
             <span className="inline-flex items-center gap-2 text-amber-400 font-semibold text-sm uppercase tracking-wider mb-4">
-              <SparklesIcon className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
               About Us
             </span>
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
@@ -77,7 +77,7 @@ export function AboutSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 hover:border-amber-400/50 transition-colors">
                 <div className="w-12 h-12 bg-amber-400/10 rounded-lg flex items-center justify-center mb-4">
-                  <CalendarIcon className="w-6 h-6 text-amber-400" />
+                  <Calendar className="w-6 h-6 text-amber-400" />
                 </div>
                 <h3 className="text-gray-900 font-semibold text-lg mb-2">
                   200+ Events
@@ -90,7 +90,7 @@ export function AboutSection() {
 
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 hover:border-cyan-400/50 transition-colors">
                 <div className="w-12 h-12 bg-cyan-400/10 rounded-lg flex items-center justify-center mb-4">
-                  <UsersIcon className="w-6 h-6 text-cyan-400" />
+                  <Users className="w-6 h-6 text-cyan-400" />
                 </div>
                 <h3 className="text-gray-900 font-semibold text-lg mb-2">
                   50+ Clubs

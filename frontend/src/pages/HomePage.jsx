@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  SparklesIcon,
-  CalendarIcon,
-  UtensilsIcon,
-  MailIcon } from
+  Sparkles,
+  Calendar,
+  Utensils,
+  Mail } from
 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { AboutSection } from '../components/AboutSection';
@@ -17,22 +17,22 @@ export function HomePage() {
   {
     href: '#about',
     label: 'About',
-    icon: SparklesIcon
+    icon: Sparkles
   },
   {
     href: '#events',
     label: 'Events',
-    icon: CalendarIcon
+    icon: Calendar
   },
   {
     href: '#services',
     label: 'Services',
-    icon: UtensilsIcon
+    icon: Utensils
   },
   {
     href: '#contact',
     label: 'Contact',
-    icon: MailIcon
+    icon: Mail
   }];
 
   const scrollToSection = (href) => {
@@ -70,7 +70,7 @@ export function HomePage() {
             }}>
 
             <span className="inline-flex items-center gap-2 text-amber-400 font-semibold text-sm uppercase tracking-wider mb-6">
-              <SparklesIcon className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
               University Event Platform
             </span>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
@@ -176,7 +176,7 @@ export function HomePage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-400 rounded-lg flex items-center justify-center">
-                <SparklesIcon className="w-5 h-5 text-zinc-950" />
+                <Sparkles className="w-5 h-5 text-zinc-950" />
               </div>
               <span className="text-gray-900 font-bold text-xl">UniEvents</span>
             </div>

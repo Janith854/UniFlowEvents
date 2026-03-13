@@ -42,14 +42,15 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MenuIcon,
-  XIcon,
-  SparklesIcon,
-  CalendarIcon,
-  UtensilsIcon,
-  MailIcon,
-  LogOutIcon,
-  UserIcon
+  Menu,
+  X,
+  Sparkles,
+  Calendar,
+  Utensils,
+  Car,
+  Mail,
+  LogOut,
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -67,9 +68,9 @@ export function Navbar() {
   }, []);
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/#events', label: 'Events', icon: CalendarIcon },
-    { href: '/#services', label: 'Food', icon: UtensilsIcon },
-    { href: '/#services', label: 'Parking', icon: UtensilsIcon }
+    { href: '/#events', label: 'Events', icon: Calendar },
+    { href: '/food', label: 'Food', icon: Utensils },
+    { href: '/parking', label: 'Parking', icon: Car }
   ];
 
   const handleLogout = () => {
@@ -84,7 +85,7 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-400 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.3)]">
-              <SparklesIcon className="w-5 h-5 text-zinc-950" />
+              <Sparkles className="w-5 h-5 text-zinc-950" />
             </div>
             <span className="text-gray-900 font-bold text-xl hidden sm:block">
               UniFlowEvents
@@ -109,7 +110,7 @@ export function Navbar() {
                   to="/profile"
                   className="flex items-center gap-2 text-gray-900 text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200"
                 >
-                  <UserIcon className="w-4 h-4 text-amber-400" />
+                  <User className="w-4 h-4 text-amber-400" />
                   <span>
                     {user?.name || 'Profile'}{' '}
                     {role === 'organizer' ? '(Organizer)' : '(Student)'}
@@ -120,7 +121,7 @@ export function Navbar() {
                   className="text-gray-500 hover:text-red-500 transition-colors"
                   title="Logout"
                 >
-                  <LogOutIcon className="w-5 h-5" />
+                  <LogOut className="w-5 h-5" />
                 </button>
               </div>
             ) : (
@@ -147,11 +148,10 @@ export function Navbar() {
             className="lg:hidden text-gray-900 p-2"
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}>
 
-            {isMenuOpen ?
-              <XIcon className="w-6 h-6" /> :
-
-              <MenuIcon className="w-6 h-6" />
-            }
+           {isMenuOpen ?
+  <X className="w-6 h-6" /> :
+  <Menu className="w-6 h-6" />
+}
           </button>
         </div>
       </div>
@@ -193,7 +193,7 @@ export function Navbar() {
                 {isAuthenticated ? (
                   <div className="space-y-3 px-4">
                     <div className="flex items-center gap-2 text-gray-900 font-medium">
-                      <UserIcon className="w-5 h-5 text-amber-400" />
+                      <User className="w-5 h-5 text-amber-400" />
                       <span>
                         {user?.name || 'Profile'}{' '}
                         {role === 'organizer' ? '(Organizer)' : '(Student)'}
@@ -203,7 +203,7 @@ export function Navbar() {
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2 text-gray-500 hover:text-red-500 py-2 transition-colors"
                     >
-                      <LogOutIcon className="w-5 h-5" />
+                      <LogOut className="w-5 h-5" />
                       Logout
                     </button>
                   </div>
