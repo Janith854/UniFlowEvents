@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Users, Calendar } from 'lucide-react';
 export function AboutSection() {
   return (
-    <section id="about" className="py-24 px-4 bg-white">
+    <section id="about" className="w-full py-24 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{

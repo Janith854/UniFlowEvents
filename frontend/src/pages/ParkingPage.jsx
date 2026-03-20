@@ -13,11 +13,11 @@ export function ParkingPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="pt-24 px-4 pb-16">
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">
             Event Parking
           </h1>
-          <div className="grid grid-cols-3 gap-4 max-w-md">
+          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
             {mockSlots.map((slot) => (
               <ParkingSlot key={slot.id} slot={slot} />
             ))}

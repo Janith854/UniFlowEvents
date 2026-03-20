@@ -23,7 +23,7 @@ export function EventDiscovery() {
     return isLoggedIn && (eventId === '1' || eventId === '2');
   };
   return (
-    <section id="events" className="py-24 px-4 bg-gray-50">
+    <section id="events" className="w-full py-24 px-4 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{

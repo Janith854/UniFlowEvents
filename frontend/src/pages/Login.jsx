@@ -9,28 +9,24 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('student');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      // The current AuthContext login implementation only needs email/role
-      // for mock authentication, but we keep the password field for UI completeness
-      await login({ email, role });
+      await login({ email, password });
       navigate('/profile', { replace: true });
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Invalid credentials. Please try again.');
+      setError(err.response?.data?.msg || 'Invalid credentials. Please try again.');
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-24 px-4">
-        <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+      <main className="pt-24 px-4 pb-10 min-h-[calc(100vh-6rem)] flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome Back
@@ -75,34 +71,6 @@ export function LoginPage() {
                 placeholder="••••••••"
                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sign in as</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole('student')}
-                  className={`py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                    role === 'student'
-                      ? 'border-amber-400 bg-amber-50 text-amber-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('organizer')}
-                  className={`py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                    role === 'organizer'
-                      ? 'border-amber-400 bg-amber-50 text-amber-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Organizer
-                </button>
-              </div>
             </div>
 
             <button

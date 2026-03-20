@@ -9,7 +9,7 @@ export function FeedbackPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="pt-24 px-4 pb-16">
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="w-full max-w-3xl mx-auto space-y-4">
           <h1 className="text-3xl font-bold text-gray-900">
             Feedback for Event {eventId}
           </h1>

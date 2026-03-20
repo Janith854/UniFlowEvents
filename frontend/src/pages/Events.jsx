@@ -19,7 +19,7 @@ export function Events() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="pt-24 px-4 pb-16">
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">All Events</h1>
           {loading && <p className="text-gray-500">Loading events...</p>}
           {error && <p className="text-red-500">{error}</p>}

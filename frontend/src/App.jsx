@@ -15,6 +15,7 @@ import { ParkingPage } from './pages/ParkingPage';
 import { ParkingReservation } from './pages/ParkingReservation';
 import { Feedback } from './pages/Feedback';
 import { FeedbackPage } from './pages/FeedbackPage';
+import { UserManagementPage } from './pages/UserManagement';
 
 export function App() {
   return (
@@ -36,6 +37,14 @@ export function App() {
           element={
             <ProtectedRoute requiredRole="organizer">
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute requiredRole="organizer">
+              <UserManagementPage />
             </ProtectedRoute>
           }
         />

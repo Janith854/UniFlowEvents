@@ -31,7 +31,7 @@ export function ContactSection() {
     setTimeout(() => setIsSuccess(false), 3000);
   };
   return (
-    <section id="contact" className="py-24 px-4 bg-white">
+    <section id="contact" className="w-full py-24 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{

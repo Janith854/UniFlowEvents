@@ -27,8 +27,8 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-24 px-4">
-        <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+      <main className="pt-24 px-4 pb-10 min-h-[calc(100vh-6rem)] flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
             Create your UniFlowEvents account
           </h1>

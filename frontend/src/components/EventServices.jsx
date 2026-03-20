@@ -254,7 +254,7 @@ export function EventServices() {
     </div>;
 
   return (
-    <section id="services" className="py-24 px-4 bg-white">
+    <section id="services" className="w-full py-24 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{
