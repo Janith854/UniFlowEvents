@@ -6,6 +6,10 @@ import {
   Menu,
   X,
   Sparkles,
+  Calendar,
+  Utensils,
+  Car,
+  LayoutDashboard,
   LogOut,
   User
 } from 'lucide-react';
@@ -23,11 +27,17 @@ export function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  const navLinks = [{ href: '/', label: 'Home' }];
+  const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/events', label: 'Events', icon: Calendar },
+    { href: '/food', label: 'Food', icon: Utensils },
+    { href: '/parking', label: 'Parking', icon: Car }
+  ];
 
   if (isAuthenticated) {
     navLinks.push({ href: '/profile', label: 'Profile', icon: User });
     if (role === 'organizer') {
+      navLinks.push({ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard });
       navLinks.push({ href: '/users', label: 'User Management', icon: User });
     }
   }
