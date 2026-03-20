@@ -20,7 +20,11 @@ export function RegisterPage() {
       await register({ name, email, password, role });
       navigate('/profile', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.msg || 'Registration failed');
+      setError(
+        err.response?.data?.msg ||
+          err.response?.data?.error ||
+          'Cannot reach backend server. Make sure backend is running on port 5001.'
+      );
     }
   };
 
