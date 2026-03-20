@@ -170,30 +170,36 @@ export function HomePage() {
       <EventServices />
       <ContactSection />
 
-      {/* Footer */}
       <footer className="bg-gray-50 border-t border-gray-200 py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-400 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-zinc-950" />
               </div>
-              <span className="text-gray-900 font-bold text-xl">UniEvents</span>
+              <span className="text-gray-900 font-bold text-xl">UniFlowEvents</span>
             </div>
-            <div className="flex items-center gap-8">
-              {navLinks.map((link) =>
-              <button
-                key={link.href}
-                onClick={() => scrollToSection(link.href)}
-                className="text-gray-500 hover:text-gray-900 text-sm transition-colors">
-
+            
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+              {navLinks.map((link) => (
+                <button
+                  key={link.href}
+                  onClick={() => scrollToSection(link.href)}
+                  className="text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors"
+                >
                   {link.label}
                 </button>
-              )}
+              ))}
             </div>
-            <p className="text-gray-400 text-sm">
-              © 2026 UniEvents. All rights reserved.
-            </p>
+
+            <div className="flex flex-col items-center md:items-end gap-1">
+              <p className="text-gray-400 text-sm">
+                © {new Date().getFullYear()} UniFlowEvents.
+              </p>
+              <p className="text-xs text-gray-400">
+                All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </footer>

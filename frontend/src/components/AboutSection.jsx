@@ -27,7 +27,7 @@ export function AboutSection() {
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-amber-400/20 to-cyan-400/20 rounded-3xl blur-2xl opacity-50" />
             <img
-              src="https://www.google.com/imgres?q=sliit%20malabe&imgurl=https%3A%2F%2Fstatic.sliit.lk%2Fwp-content%2Fuploads%2F2018%2F03%2FSLIIT-malabe.jpg&imgrefurl=https%3A%2F%2Fwww.sliit.lk%2Fabout%2Fabout-sliit%2F&docid=xVv0ivt9FQzeoM&tbnid=xlqlKXzUt0Cp5M&vet=12ahUKEwi0lKuyq5yTAxXfm68BHWPSAfEQnPAOegQIGBAB..i&w=1920&h=1080&hcb=2&ved=2ahUKEwi0lKuyq5yTAxXfm68BHWPSAfEQnPAOegQIGBAB"
+              src="https://www.sliit.lk/about/about-sliit/"
               alt="University campus with modern architecture and green spaces"
               className="relative w-full h-[400px] lg:h-[500px] object-cover rounded-2xl border border-gray-200 shadow-lg" />
 
