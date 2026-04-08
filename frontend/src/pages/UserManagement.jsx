@@ -94,7 +94,7 @@ export function UserManagementPage() {
                       <td className="p-4">
                         <button
                           onClick={() => handleDelete(u.id)}
-                          className="px-3 py-1.5 rounded-md bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                          className="px-4 py-2 rounded-xl bg-amber-400 text-zinc-950 font-black hover:bg-amber-300 transition-all shadow-sm active:scale-95"
                         >
                           Delete
                         </button>

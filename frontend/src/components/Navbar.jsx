@@ -14,7 +14,8 @@ import {
   User,
   CalendarDays,
   BarChart,
-  CheckSquare
+  CheckSquare,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,13 +39,9 @@ export function Navbar() {
   ];
 
   if (isAuthenticated) {
-    navLinks.push({ href: '/profile', label: 'Profile', icon: User });
     navLinks.push({ href: '/calendar', label: 'Calendar', icon: CalendarDays });
     if (role === 'organizer') {
       navLinks.push({ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard });
-      navLinks.push({ href: '/users', label: 'Users', icon: User });
-      navLinks.push({ href: '/analytics', label: 'Analytics', icon: BarChart });
-      navLinks.push({ href: '/approvals', label: 'Approvals', icon: CheckSquare });
     }
   }
 
@@ -92,26 +89,20 @@ export function Navbar() {
                   </span>
                 </Link>
                 <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-red-500 transition-colors"
-                  title="Logout"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
+              onClick={logout}
+              className="p-3 bg-amber-400 text-zinc-950 rounded-2xl hover:bg-amber-300 transition-all shadow-lg shadow-amber-200 active:scale-95"
+              title="Logout"
+            >
+              <LogOut size={20} />
+            </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="text-gray-700 font-medium hover:text-gray-900 transition-colors"
+                  className="bg-amber-400 text-zinc-950 font-bold px-8 py-2.5 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]"
                 >
                   Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-amber-400 text-zinc-950 font-bold px-6 py-2.5 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]"
-                >
-                  Register
                 </Link>
               </div>
             )}
@@ -175,28 +166,21 @@ export function Navbar() {
                       </span>
                     </div>
                     <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 text-gray-500 hover:text-red-500 py-2 transition-colors"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      Logout
-                    </button>
+              onClick={logout}
+              className="w-full mt-2 flex items-center justify-center gap-3 p-4 bg-amber-400 text-zinc-950 rounded-2xl font-black transition-all active:scale-95 shadow-lg shadow-amber-200"
+            >
+              <LogOut size={20} />
+              Logout
+            </button>
                   </div>
                 ) : (
-                  <div className="space-y-3 px-4">
+                  <div className="space-y-3 px-4 pb-4">
                     <Link
                       to="/login"
                       onClick={() => setIsMenuOpen(false)}
-                      className="w-full bg-white text-gray-900 font-bold px-6 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center"
+                      className="w-full block bg-amber-400 text-zinc-950 font-bold px-6 py-3 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] text-center"
                     >
                       Login
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="w-full bg-amber-400 text-zinc-950 font-bold px-6 py-3 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] text-center"
-                    >
-                      Register
                     </Link>
                   </div>
                 )}

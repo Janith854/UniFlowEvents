@@ -6,7 +6,7 @@ import { TicketRoute } from './components/TicketRoute';
 import { GlobalSocketListener } from './components/GlobalSocketListener';
 import { Home } from './pages/Home';
 import { LoginPage } from './pages/Login';
-import { RegisterPage } from './pages/Register';
+import { HomePage } from './pages/HomePage'; // Just in case, checking names
 import { ProfilePage } from './pages/Profile';
 import { Dashboard } from './pages/Dashboard';
 import { Events } from './pages/Events';
@@ -16,6 +16,9 @@ import { AdminFoodDashboard } from './pages/AdminFoodDashboard';
 import { AdminInventoryDashboard } from './pages/AdminInventoryDashboard';
 import { ParkingPage } from './pages/ParkingPage';
 import { ParkingReservation } from './pages/ParkingReservation';
+import { ResetPassword } from './pages/ResetPassword';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { OrganizerFeedbackDashboard } from './pages/OrganizerFeedbackDashboard';
 import { Feedback } from './pages/Feedback';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { UserManagementPage } from './pages/UserManagement';
@@ -24,6 +27,8 @@ import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 import { ApprovalQueue } from './pages/ApprovalQueue';
 import { CreateEvent } from './pages/CreateEvent';
 import { DigitalPass } from './pages/DigitalPass';
+import { AdminParkingDashboard } from './pages/AdminParkingDashboard';
+import { EditEvent } from './pages/EditEvent';
 
 export function App() {
   return (
@@ -32,7 +37,9 @@ export function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/profile"
           element={
@@ -65,6 +72,14 @@ export function App() {
           element={
             <ProtectedRoute requiredRole="organizer">
               <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/:id/edit"
+          element={
+            <ProtectedRoute requiredRole="organizer">
+              <EditEvent />
             </ProtectedRoute>
           }
         />
@@ -107,6 +122,22 @@ export function App() {
           element={
             <ProtectedRoute requiredRole="organizer">
               <AdminInventoryDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/feedback"
+          element={
+            <ProtectedRoute requiredRole="organizer">
+              <OrganizerFeedbackDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/parking"
+          element={
+            <ProtectedRoute requiredRole="organizer">
+              <AdminParkingDashboard />
             </ProtectedRoute>
           }
         />

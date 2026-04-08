@@ -27,8 +27,8 @@ export function AboutSection() {
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-amber-400/20 to-cyan-400/20 rounded-3xl blur-2xl opacity-50" />
             <img
-              src="https://www.sliit.lk/about/about-sliit/"
-              alt="University campus with modern architecture and green spaces"
+              src="https://static.sliit.lk/wp-content/uploads/2018/03/SLIIT-malabe.jpg"
+              alt="SLIIT Malabe Campus - Modern architecture and green spaces"
               className="relative w-full h-[400px] lg:h-[500px] object-cover rounded-2xl border border-gray-200 shadow-lg" />
 
             <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-lg">

@@ -73,41 +73,85 @@ exports.getFoodOrders = async (req, res) => {
 
 exports.createFoodOrder = async (req, res) => {
     try {
-        const { ticketId, items, totalAmount, pickupSlot, event, user } = req.body;
-        
-        if (!ticketId) {
-            return res.status(400).json({ msg: 'Valid TicketID is required to place a food order.' });
+        const { ticketId, items, pickupSlot, event, user } = req.body;
+
+        // ── 1. Required fields ──────────────────────────────────────────────
+        if (!ticketId || !ticketId.trim()) {
+            return res.status(400).json({ msg: 'A valid Event Ticket ID is required to place a food order.' });
+        }
+        if (!pickupSlot) {
+            return res.status(400).json({ msg: 'A pickup slot must be selected.' });
+        }
+        const validSlots = ['12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM'];
+        if (!validSlots.includes(pickupSlot)) {
+            return res.status(400).json({ msg: 'Invalid pickup slot. Choose from 12:00 PM, 12:30 PM, 1:00 PM, or 1:30 PM.' });
         }
 
-        // Validate using Locks first, fall back to direct stock check if lock expired
+        // ── 2. Items array must not be empty ────────────────────────────────
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ msg: 'Your cart is empty. Add at least one item before checking out.' });
+        }
+
+        // ── 3. Prevent duplicate orders for the same ticket ─────────────────
+        const duplicateOrder = await FoodOrder.findOne({ ticketId: ticketId.trim() });
+        if (duplicateOrder) {
+            return res.status(409).json({ msg: 'A food order has already been placed for this event ticket. You cannot order twice on the same ticket.' });
+        }
+
+        // ── 4. Per-item validation: max qty, existence & stock ──────────────
+        const MAX_QTY_PER_ITEM = 10;
+        let serverTotalAmount = 0;
+        const processedItems = []; // To store items with server-validated prices and details
+
         for (const item of items) {
+            const qty = Number(item.quantity);
+
+            if (!qty || qty < 1) {
+                return res.status(400).json({ msg: `Invalid quantity for item: ${item.name}. Minimum is 1.` });
+            }
+            if (qty > MAX_QTY_PER_ITEM) {
+                return res.status(400).json({ msg: `Maximum ${MAX_QTY_PER_ITEM} units allowed per item. You requested ${qty}x ${item.name}.` });
+            }
+
             const menuId = item.menuItem || item.id || item._id;
             const menuItem = await MenuItem.findById(menuId);
             if (!menuItem) {
                 return res.status(404).json({ msg: `Menu item not found: ${item.name}` });
             }
 
+            // Use DB price (not client-supplied price) to prevent price manipulation
+            serverTotalAmount += menuItem.price * qty;
+
             const lock = await CartLock.findOne({ ticketId, menuItem: menuId });
             if (lock) {
-                // Lock still alive — consume it
-                menuItem.stockCount -= item.quantity;
+                menuItem.stockCount -= qty;
                 await menuItem.save();
                 await CartLock.deleteOne({ _id: lock._id });
             } else {
-                // Lock expired (TTL) — fall back to real-time stock check
-                if (menuItem.stockCount < item.quantity) {
-                    return res.status(400).json({ msg: `Not enough stock for ${item.name}. Only ${menuItem.stockCount} left.` });
+                if (menuItem.stockCount < qty) {
+                    return res.status(400).json({ msg: `Not enough stock for "${menuItem.name}". Only ${menuItem.stockCount} left.` });
                 }
-                menuItem.stockCount -= item.quantity;
+                menuItem.stockCount -= qty;
                 await menuItem.save();
             }
+
+            processedItems.push({
+                menuItem: menuId,
+                name: menuItem.name,
+                quantity: qty,
+                price: menuItem.price,
+                stallNumber: item.stallNumber || menuItem.stallNumber || 'General Stall'
+            });
         }
 
+        // ── 5. Apply loyalty voucher discount on serverTotalAmount ──────────
         if (req.user) {
             const dbUser = await User.findById(req.user._id);
             if (dbUser && dbUser.activeVouchers && dbUser.activeVouchers.includes('5_EVENT_SNACK_REWARD')) {
-                const eligible = items.some(i => i.name === 'Caramel Popcorn' || i.name === 'Iced Lemon Tea');
+                const eligible = processedItems.some(i => i.name === 'Caramel Popcorn' || i.name === 'Iced Lemon Tea');
                 if (eligible) {
+                    const voucherItem = processedItems.find(i => i.name === 'Caramel Popcorn' || i.name === 'Iced Lemon Tea');
+                    if (voucherItem) serverTotalAmount -= voucherItem.price;
                     dbUser.activeVouchers = dbUser.activeVouchers.filter(v => v !== '5_EVENT_SNACK_REWARD');
                     await dbUser.save();
                 }
@@ -115,7 +159,7 @@ exports.createFoodOrder = async (req, res) => {
         }
 
         const stallMap = {};
-        for (const item of items) {
+        for (const item of processedItems) {
             const sn = item.stallNumber || 'General Stall';
             if (!stallMap[sn]) stallMap[sn] = [];
             stallMap[sn].push(`${item.quantity}x ${item.name}`);
@@ -132,15 +176,9 @@ exports.createFoodOrder = async (req, res) => {
         const order = new FoodOrder({
             user: (req.user && req.user._id) || user,
             event,
-            ticketId,
-            items: items.map(i => ({
-                menuItem: i.menuItem || i.id || i._id,
-                name: i.name,
-                quantity: i.quantity,
-                price: i.price,
-                stallNumber: i.stallNumber || 'General Stall'
-            })),
-            totalAmount,
+            ticketId: ticketId.trim(),
+            items: processedItems,
+            totalAmount: Math.max(0, serverTotalAmount), // server-calculated — client cannot spoof
             pickupSlot,
             qrString,
             status: 'Pending'
@@ -149,6 +187,11 @@ exports.createFoodOrder = async (req, res) => {
         await order.save();
         res.status(201).json(order);
     } catch (err) {
+        // Surface Mongoose validation errors cleanly
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({ msg: messages.join(' | ') });
+        }
         res.status(500).json({ error: err.message });
     }
 };

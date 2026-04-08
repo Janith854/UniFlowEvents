@@ -18,15 +18,22 @@ export function AdminFoodDashboard() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const authToken = token || (localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null);
-      const res = await axios.get('http://localhost:5001/api/food', {
+      const authStore = localStorage.getItem('uniflow_auth');
+      const authToken = authStore ? JSON.parse(authStore).token : null;
+      const res = await axios.get('http://localhost:5002/api/food', {
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
       });
-      setOrders(res.data);
+      setOrders(Array.isArray(res.data) ? res.data : []);
       setError('');
     } catch (err) {
-      console.error(err);
-      setError('Failed to fetch orders.');
+      console.error('Food orders fetch error:', err);
+      if (err.response?.status === 401) {
+        setError('⚠️ Not authorized. Please make sure you are logged in as an organizer.');
+      } else if (!err.response) {
+        setError('⚠️ Cannot connect to server. Is the backend running on port 5002?');
+      } else {
+        setError(`Failed to fetch orders: ${err.response?.data?.error || err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -38,7 +45,7 @@ export function AdminFoodDashboard() {
                      : 'Pending';
     try {
       const authToken = token || (localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null);
-      await axios.put(`http://localhost:5001/api/food/${orderId}`, 
+      await axios.put(`http://localhost:5002/api/food/${orderId}`, 
         { status: nextStatus },
         { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
       );
@@ -162,7 +169,15 @@ export function AdminFoodDashboard() {
                         <td className="p-4">
                           <ul className="text-sm text-gray-600 space-y-1">
                             {order.items.map((i, idx) => (
-                              <li key={idx} className="flex flex-col">
+                              <li key={idx} className="flex flex-col gap-1 mb-2">
+                                {i.image && (
+                                  <img
+                                    src={String(i.image).startsWith('http') ? i.image : `http://localhost:5002${i.image}`}
+                                    alt={i.name}
+                                    className="w-12 h-12 rounded-lg object-cover border border-gray-100"
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                  />
+                                )}
                                 <span><span className="font-bold text-gray-900">{i.quantity}x</span> {i.name}</span>
                                 <span className="text-[10px] uppercase font-bold text-amber-600 bg-amber-50 inline-block w-max px-1 rounded">{i.stallNumber || 'General Stall'}</span>
                               </li>
@@ -174,11 +189,7 @@ export function AdminFoodDashboard() {
                         <td className="p-4 text-center">
                           <button
                             onClick={() => handleStatusToggle(order._id, order.status)}
-                            className={`px-4 py-2 w-28 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-95 ${
-                              order.status === 'Pending' ? 'bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200' :
-                              order.status === 'Ready' ? 'bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200' :
-                              'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200'
-                            }`}
+                            className="bg-amber-400 text-zinc-950 px-4 py-2 w-28 rounded-xl font-black text-xs transition-all shadow-md hover:bg-amber-300 active:scale-95 border border-amber-500/20"
                           >
                             {order.status}
                           </button>

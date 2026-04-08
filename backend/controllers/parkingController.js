@@ -3,9 +3,23 @@ const QRCode = require('qrcode');
 const ParkingReservation = require('../models/ParkingReservation');
 const Event = require('../models/Event');
 
+// Helper: Cleanup pending reservations older than 15 minutes
+const cleanupExpiredReservations = async () => {
+    try {
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        await ParkingReservation.deleteMany({
+            paymentStatus: 'Pending',
+            createdAt: { $lt: fifteenMinutesAgo }
+        });
+    } catch (err) {
+        console.error('Cleanup failed:', err);
+    }
+};
+
 // Get all reservations for an event to show availability
 exports.getParkingStatus = async (req, res) => {
     try {
+        await cleanupExpiredReservations();
         const { eventId } = req.params;
         const reservations = await ParkingReservation.find({ event: eventId, paymentStatus: 'Paid' })
             .select('slotNumber zone');
@@ -18,6 +32,7 @@ exports.getParkingStatus = async (req, res) => {
 // Create a Stripe Checkout Session
 exports.createCheckoutSession = async (req, res) => {
     try {
+        await cleanupExpiredReservations();
         const { eventId, vehiclePlate, zone, slotNumber } = req.body;
         const studentId = req.user.id;
 

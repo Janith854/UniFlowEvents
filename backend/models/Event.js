@@ -7,7 +7,7 @@ const eventSchema = new mongoose.Schema({
     location: { type: String, required: true }, // Venue
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     // Phase 1 Additions
-    category: { type: String, enum: ['Academic', 'Social', 'Sports', 'Other'], default: 'Other' },
+    category: { type: String, enum: ['Academic', 'Social', 'Sports', 'Workshop', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'], default: 'Other' },
     capacity: { type: Number, required: true },
     ticketing: {
         regularPrice: { type: Number, default: 0 },

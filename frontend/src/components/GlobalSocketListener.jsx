@@ -8,7 +8,7 @@ export function GlobalSocketListener() {
 
   useEffect(() => {
     // Connect to Backend universally
-    const socket = io('http://localhost:5001', {
+    const socket = io('http://localhost:5002', {
       withCredentials: true,
     });
 

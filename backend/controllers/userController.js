@@ -5,6 +5,7 @@ const sanitizeUser = (user) => ({
     name: user.name,
     email: user.email,
     role: user.role,
+    isActive: user.isActive,
     eventsAttended: user.eventsAttended,
     activeVouchers: user.activeVouchers,
     createdAt: user.createdAt,
@@ -136,6 +137,72 @@ exports.updateMyProfile = async (req, res) => {
 
         if (!user) return res.status(404).json({ msg: 'User not found' });
         res.json(sanitizeUser(user));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deactivateUser = async (req, res) => {
+    try {
+        if (!canManageUser(req.user, req.params.id)) {
+            return res.status(403).json({ msg: 'Not authorized to deactivate this account' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        user.isActive = false;
+        await user.save();
+
+        res.json({ msg: 'User deactivated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+            return res.status(404).json({ msg: 'User with this email does not exist' });
+        }
+
+        const resetToken = require('crypto').randomBytes(20).toString('hex');
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000;
+
+        await user.save();
+
+        const emailService = require('../services/emailService');
+        const previewUrl = await emailService.sendPasswordResetEmail(user.email, resetToken);
+
+        res.json({ msg: 'Password reset link sent to email', previewUrl });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        const user = await User.findOne({ 
+            resetPasswordToken: token, 
+            resetPasswordExpires: { $gt: Date.now() } 
+        });
+
+        if (!user) {
+            return res.status(400).json({ msg: 'Password reset token is invalid or has expired' });
+        }
+
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        res.json({ msg: 'Password has been reset successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

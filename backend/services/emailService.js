@@ -43,3 +43,29 @@ exports.sendBulkInvitations = async (emails, eventTitle, eventDate, eventLocatio
     console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
     return nodemailer.getTestMessageUrl(info);
 };
+
+exports.sendPasswordResetEmail = async (email, resetToken) => {
+    const transporter = await createTransporter();
+    
+    // In a real app, this would be your frontend URL
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+
+    const htmlContent = `
+        <h1>Password Reset Request</h1>
+        <p>You are receiving this email because you (or someone else) have requested the reset of the password for your account.</p>
+        <p>Please click on the following link, or paste this into your browser to complete the process within one hour of receiving it:</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+    `;
+
+    const info = await transporter.sendMail({
+        from: '"CampusFlow Support" <support@campusflow.test>', 
+        to: email, 
+        subject: 'CampusFlow Password Reset Request',
+        html: htmlContent, 
+    });
+
+    console.log("Password Reset Email sent: %s", info.messageId);
+    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    return nodemailer.getTestMessageUrl(info);
+};

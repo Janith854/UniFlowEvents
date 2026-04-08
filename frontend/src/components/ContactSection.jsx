@@ -75,8 +75,8 @@ export function ContactSection() {
                   <h3 className="text-lg font-bold text-gray-900 mb-1">
                     Email Us
                   </h3>
-                  <p className="text-gray-600">support@unievents.edu</p>
-                  <p className="text-gray-600">events@unievents.edu</p>
+                  <p className="text-gray-600">support@my.sliit.lk</p>
+                  <p className="text-gray-600">events@my.sliit.lk</p>
                 </div>
               </div>
 
@@ -88,7 +88,7 @@ export function ContactSection() {
                   <h3 className="text-lg font-bold text-gray-900 mb-1">
                     Call Us
                   </h3>
-                  <p className="text-gray-600">+1 (555) 123-4567</p>
+                  <p className="text-gray-600">+94 11 754 4801</p>
                   <p className="text-gray-500 text-sm mt-1">
                     Mon-Fri, 9am-5pm EST
                   </p>
@@ -104,7 +104,7 @@ export function ContactSection() {
                     Visit Us
                   </h3>
                   <p className="text-gray-600">Student Center, Room 304</p>
-                  <p className="text-gray-600">123 University Ave</p>
+                  <p className="text-gray-600">New Kandy Road, Malabe</p>
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
     expiry: '',
     cvc: ''
   });
+  const [touched, setTouched] = useState({ cardNumber: false, expiry: false, cvc: false });
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -33,12 +34,60 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
       return;
     }
 
-    setFormData(prev => ({ ...prev, [name]: value.substring(0, name === 'cvc' ? 3 : 20) }));
+    // CVV: digits only, max 4
+    if (name === 'cvc') {
+      const cleaned = value.replace(/\D/g, '').substring(0, 4);
+      setFormData(prev => ({ ...prev, cvc: cleaned }));
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value.substring(0, 20) }));
   };
 
-  const isFormValid = formData.cardNumber.replace(/\s/g, '').length === 16 && 
-                      formData.expiry.length === 5 && 
-                      formData.cvc.length === 3;
+  const handleBlur = (e) => {
+    setTouched(prev => ({ ...prev, [e.target.name]: true }));
+  };
+
+  // --- Validation helpers ---
+  const getCardNumberError = () => {
+    const digits = formData.cardNumber.replace(/\s/g, '');
+    if (digits.length === 0) return 'Card number is required.';
+    if (!/^\d+$/.test(digits)) return 'Card number must contain digits only.';
+    if (digits.length !== 16) return 'Card number must be exactly 16 digits.';
+    return '';
+  };
+
+  const getExpiryError = () => {
+    const { expiry } = formData;
+    if (expiry.length === 0) return 'Expiry date is required.';
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) return 'Use MM/YY format (e.g. 08/27).';
+    const [mm, yy] = expiry.split('/').map(Number);
+    if (mm < 1 || mm > 12) return 'Month must be between 01 and 12.';
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    if (yy < currentYear || (yy === currentYear && mm < currentMonth)) {
+      return 'This card has expired.';
+    }
+    return '';
+  };
+
+  const getCvcError = () => {
+    const { cvc } = formData;
+    if (cvc.length === 0) return 'CVV is required.';
+    if (!/^\d+$/.test(cvc)) return 'CVV must contain digits only.';
+    if (cvc.length < 3) return 'CVV must be 3 or 4 digits.';
+    return '';
+  };
+
+  const cardNumberError = getCardNumberError();
+  const expiryError = getExpiryError();
+  const cvcError = getCvcError();
+
+  const isFormValid =
+    !cardNumberError &&
+    !expiryError &&
+    !cvcError;
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -93,8 +142,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                   <p className="text-sm font-bold text-zinc-900">Slot {reservationData.slotNumber} • {reservationData.zone} Zone</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest leading-none mb-1">Total</p>
-                    <p className="text-lg font-black text-zinc-900">LKR 1,000</p>
+                    <p className="text-lg font-black text-zinc-900">Rs. 1,000</p>
                 </div>
               </div>
 
@@ -103,7 +151,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Card Number</label>
                   <div className="relative group">
-                    <CreditCard size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-zinc-950 transition-colors" />
+                    <CreditCard size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${touched.cardNumber && cardNumberError ? 'text-rose-400' : 'text-gray-400 group-focus-within:text-zinc-950'}`} />
                     <input 
                       required
                       type="text"
@@ -111,9 +159,19 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                       placeholder="0000 0000 0000 0000"
                       value={formData.cardNumber}
                       onChange={handleInputChange}
-                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-zinc-950 transition-all outline-none"
+                      onBlur={handleBlur}
+                      className={`w-full bg-gray-50 border-2 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold placeholder:text-gray-300 focus:bg-white transition-all outline-none ${
+                        touched.cardNumber && cardNumberError
+                          ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
+                          : 'border-gray-100 focus:border-zinc-950'
+                      }`}
                     />
                   </div>
+                  {touched.cardNumber && cardNumberError && (
+                    <p className="text-[11px] font-bold text-rose-500 ml-1 flex items-center gap-1">
+                      <span>⚠</span> {cardNumberError}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -121,7 +179,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Expiry Date</label>
                     <div className="relative group">
-                      <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-zinc-950 transition-colors" />
+                      <Calendar size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${touched.expiry && expiryError ? 'text-rose-400' : 'text-gray-400 group-focus-within:text-zinc-950'}`} />
                       <input 
                         required
                         type="text"
@@ -129,16 +187,27 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                         placeholder="MM/YY"
                         value={formData.expiry}
                         onChange={handleInputChange}
-                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-zinc-950 transition-all outline-none"
+                        onBlur={handleBlur}
+                        maxLength={5}
+                        className={`w-full bg-gray-50 border-2 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold placeholder:text-gray-300 focus:bg-white transition-all outline-none ${
+                          touched.expiry && expiryError
+                            ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
+                            : 'border-gray-100 focus:border-zinc-950'
+                        }`}
                       />
                     </div>
+                    {touched.expiry && expiryError && (
+                      <p className="text-[11px] font-bold text-rose-500 ml-1 flex items-center gap-1">
+                        <span>⚠</span> {expiryError}
+                      </p>
+                    )}
                   </div>
 
                   {/* CVC */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">CVC</label>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">CVV / CVC</label>
                     <div className="relative group">
-                      <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-zinc-950 transition-colors" />
+                      <Lock size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${touched.cvc && cvcError ? 'text-rose-400' : 'text-gray-400 group-focus-within:text-zinc-950'}`} />
                       <input 
                         required
                         type="password"
@@ -146,35 +215,48 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                         placeholder="•••"
                         value={formData.cvc}
                         onChange={handleInputChange}
-                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-zinc-950 transition-all outline-none"
+                        onBlur={handleBlur}
+                        maxLength={4}
+                        className={`w-full bg-gray-50 border-2 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold placeholder:text-gray-300 focus:bg-white transition-all outline-none ${
+                          touched.cvc && cvcError
+                            ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
+                            : 'border-gray-100 focus:border-zinc-950'
+                        }`}
                       />
                     </div>
+                    {touched.cvc && cvcError && (
+                      <p className="text-[11px] font-bold text-rose-500 ml-1 flex items-center gap-1">
+                        <span>⚠</span> {cvcError}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <button 
                   type="submit"
                   disabled={isProcessing || !isFormValid}
-                  title={!isFormValid ? "Please fill all card details" : ""}
+                  title={!isFormValid ? "Please fill all card details correctly" : ""}
+                  onClick={() => setTouched({ cardNumber: true, expiry: true, cvc: true })}
                   className={`w-full rounded-2xl py-4 text-sm font-black uppercase tracking-widest mt-4 shadow-xl transition-all flex items-center justify-center gap-2 ${
                     isFormValid 
-                    ? 'bg-zinc-900 text-white shadow-zinc-200 hover:bg-zinc-800' 
+                    ? 'bg-amber-400 text-zinc-950 shadow-amber-200 hover:bg-amber-300' 
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                   }`}
                 >
                   {isProcessing ? (
                     <>
-                      <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-3 border-zinc-950/30 border-t-zinc-950 rounded-full animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
                       <Lock size={16} />
-                      {isFormValid ? 'Pay LKR 1,000' : 'Fill Card Details'}
+                      {isFormValid ? 'Pay Rs. 1,000' : 'Fill Card Details'}
                     </>
                   )}
                 </button>
               </form>
+
             </div>
           ) : (
             <div className="p-12 text-center space-y-4">

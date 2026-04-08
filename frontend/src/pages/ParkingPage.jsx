@@ -5,11 +5,15 @@ import { getEvents } from '../services/eventService';
 import { getParkingStatus, createCheckoutSession } from '../services/parkingService';
 import { PaymentModal } from '../components/PaymentModal';
 import { loadStripe } from '@stripe/stripe-js';
+import { useAuth } from '../context/AuthContext';
+import { BarChart2, TrendingUp, Users, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 export function ParkingPage() {
+  const { role } = useAuth();
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [reservedSlots, setReservedSlots] = useState([]);
@@ -85,8 +89,21 @@ export function ParkingPage() {
             <div className="bg-white p-6 rounded-3xl shadow-xl shadow-zinc-200/50 border border-gray-100">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h1 className="text-3xl font-black text-zinc-950 tracking-tight">Smart Parking</h1>
-                  <p className="text-gray-500 text-sm mt-1">Select an available slot for your event.</p>
+                  <h1 className="text-3xl font-black text-zinc-950 tracking-tight flex items-center gap-3">
+                    Smart Parking
+                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Live Status</span>
+                    </div>
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {reservedSlots.length < 100 ? (
+                      <span className="text-zinc-900 font-bold">{100 - reservedSlots.length} slots available</span>
+                    ) : (
+                      <span className="text-rose-500 font-bold">Parking Full</span>
+                    )} 
+                    {' '}for your selected event.
+                  </p>
                 </div>
                 
                 <select 
@@ -99,6 +116,45 @@ export function ParkingPage() {
                   ))}
                 </select>
               </div>
+
+              {role === 'organizer' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="p-2 bg-amber-400 rounded-lg">
+                        <Users className="w-4 h-4 text-zinc-950" />
+                      </div>
+                      <span className="text-[11px] font-black text-amber-700 uppercase tracking-wider">Occupancy</span>
+                    </div>
+                    <p className="text-2xl font-black text-zinc-950">{reservedSlots.length}%</p>
+                    <p className="text-[10px] text-amber-600 font-bold uppercase mt-1">Total Capacity: 100</p>
+                  </div>
+
+                  <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="p-2 bg-emerald-500 rounded-lg">
+                        <TrendingUp className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-[11px] font-black text-emerald-700 uppercase tracking-wider">Revenue</span>
+                    </div>
+                    <p className="text-2xl font-black text-zinc-950">Rs. {(reservedSlots.length * 1000).toLocaleString()}</p>
+                    <p className="text-[10px] text-emerald-600 font-bold uppercase mt-1">LKR 1,000 per slot</p>
+                  </div>
+
+                  <Link to="/admin/parking" className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800 flex flex-col justify-between hover:bg-zinc-900 transition-colors group">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="p-2 bg-zinc-800 rounded-lg group-hover:bg-zinc-700 transition-colors">
+                        <BarChart2 className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <span className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">Analytics</span>
+                    </div>
+                    <div className="flex items-center justify-between text-white">
+                      <span className="font-bold text-sm">Full Report</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </Link>
+                </div>
+              )}
 
               <ParkingMap 
                 selectedSlot={selectedSlot}
@@ -147,10 +203,10 @@ export function ParkingPage() {
                   <button 
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-zinc-950 text-white font-black py-5 rounded-2xl hover:bg-zinc-800 transition-all shadow-2xl shadow-zinc-950/20 disabled:opacity-70 group flex items-center justify-center gap-3"
+                    className="w-full bg-amber-400 text-zinc-950 font-black py-5 rounded-2xl hover:bg-amber-300 transition-all shadow-2xl shadow-amber-400/20 disabled:opacity-70 group flex items-center justify-center gap-3"
                   >
                     {isLoading ? (
-                        <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-5 h-5 border-4 border-zinc-950 border-t-transparent rounded-full animate-spin"></div>
                     ) : (
                         <>
                             <span>Authorize Payment</span>

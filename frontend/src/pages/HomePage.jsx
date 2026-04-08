@@ -11,6 +11,8 @@ import { AboutSection } from '../components/AboutSection';
 import { ContactSection } from '../components/ContactSection';
 import { EventDiscovery } from '../components/EventDiscovery';
 import { EventServices } from '../components/EventServices';
+import { AnimatedCounter } from '../components/AnimatedCounter';
+
 export function HomePage() {
   // Navigation links for Footer
   const navLinks = [
@@ -92,8 +94,7 @@ export function HomePage() {
               </button>
               <button
                 onClick={() => scrollToSection('#about')}
-                className="w-full sm:w-auto bg-white text-gray-900 font-bold px-8 py-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">
-
+                className="w-full sm:w-auto bg-amber-400 text-zinc-950 font-black px-8 py-4 rounded-lg hover:bg-amber-300 transition-all shadow-md active:scale-95">
                 Learn More
               </button>
             </div>
@@ -117,19 +118,19 @@ export function HomePage() {
 
             <div>
               <p className="text-3xl md:text-4xl font-bold text-gray-900">
-                200+
+                <AnimatedCounter target={200} suffix="+" />
               </p>
               <p className="text-gray-500 text-sm">Events/Year</p>
             </div>
             <div>
               <p className="text-3xl md:text-4xl font-bold text-gray-900">
-                5K+
+                <AnimatedCounter target={5} suffix="K+" />
               </p>
               <p className="text-gray-500 text-sm">Students</p>
             </div>
             <div>
               <p className="text-3xl md:text-4xl font-bold text-gray-900">
-                50+
+                <AnimatedCounter target={50} suffix="+" />
               </p>
               <p className="text-gray-500 text-sm">Clubs</p>
             </div>
@@ -185,7 +186,7 @@ export function HomePage() {
                 <button
                   key={link.href}
                   onClick={() => scrollToSection(link.href)}
-                  className="text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors"
+                  className="bg-transparent p-0 border-none shadow-none text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
                   {link.label}
                 </button>

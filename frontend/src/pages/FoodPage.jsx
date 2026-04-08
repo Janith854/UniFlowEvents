@@ -1,29 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/Navbar';
 import axios from 'axios';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import GaugeChart from 'react-gauge-chart';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { useAuth } from '../context/AuthContext';
+
+const MAX_QTY_PER_ITEM = 10;
+const MIN_ORDER_AMOUNT = 100;
 
 export function FoodPage() {
   const { user } = useAuth();
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [pickupSlot, setPickupSlot] = useState('');
-  const [orderStatus, setOrderStatus] = useState(null); // 'idle', 'loading', 'success', 'error'
+  const [orderStatus, setOrderStatus] = useState(null);
   const [qrString, setQrString] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [rewardEligible, setRewardEligible] = useState(false);
   const [orderedItems, setOrderedItems] = useState([]);
   const [ecoVoucher, setEcoVoucher] = useState(false);
   const [activeVouchers, setActiveVouchers] = useState([]);
+  const passRef = useRef();
+  const qrRef = useRef();
 
   useEffect(() => {
     const fetchLatestUser = async () => {
       try {
         const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
         if (token) {
-          const res = await axios.get('http://localhost:5001/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+          const res = await axios.get('http://localhost:5002/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
           if (res.data && res.data.user && res.data.user.activeVouchers) {
              setActiveVouchers(res.data.user.activeVouchers);
           }
@@ -38,7 +45,7 @@ export function FoodPage() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await axios.get('http://localhost:5001/api/food/menu');
+        const res = await axios.get('http://localhost:5002/api/food/menu');
         setMenuItems(res.data);
       } catch (err) {
         console.error('Failed to fetch menu:', err);
@@ -47,14 +54,118 @@ export function FoodPage() {
     fetchMenu();
   }, []);
 
+  const downloadOrderPass = async (orderData) => {
+    try {
+      const { qr, pickup, items } = orderData;
+
+      // Create an off-screen container with fixed dimensions and inline styles
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position: fixed; top: -9999px; left: -9999px;
+        width: 480px; padding: 48px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 24px;
+        font-family: Inter, system-ui, sans-serif;
+        display: flex; flex-direction: column; align-items: center;
+        text-align: center; box-sizing: border-box;
+      `;
+      document.body.appendChild(container);
+
+      // Header
+      const h2 = document.createElement('h2');
+      h2.textContent = '🎉 Order Successful!';
+      h2.style.cssText = 'font-size: 28px; font-weight: 900; color: #15803d; margin: 0 0 12px 0;';
+      container.appendChild(h2);
+
+      const subtitle = document.createElement('p');
+      subtitle.textContent = `Present this QR code at your selected pickup slot (${pickup}).`;
+      subtitle.style.cssText = 'font-size: 15px; color: #374151; margin: 0 0 24px 0; font-weight: 500;';
+      container.appendChild(subtitle);
+
+      // QR code: extract from on-screen canvas via qrRef
+      const qrWrapper = document.createElement('div');
+      qrWrapper.style.cssText = 'background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px; display: inline-block;';
+      container.appendChild(qrWrapper);
+
+      // Get QR image from the rendered canvas on screen
+      const onScreenQRCanvas = qrRef.current?.querySelector?.('canvas') || qrRef.current;
+      if (onScreenQRCanvas && onScreenQRCanvas.toDataURL) {
+        const qrImg = document.createElement('img');
+        qrImg.src = onScreenQRCanvas.toDataURL('image/png');
+        qrImg.style.cssText = 'width: 200px; height: 200px; display: block;';
+        qrWrapper.appendChild(qrImg);
+      }
+
+      // Stall instructions
+      const instructionBox = document.createElement('div');
+      instructionBox.style.cssText = 'width: 100%; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px 20px; text-align: left; margin-top: 8px;';
+      const stallTitle = document.createElement('h3');
+      stallTitle.textContent = 'Food Court Pickup Instructions:';
+      stallTitle.style.cssText = 'font-size: 14px; font-weight: 700; color: #111827; margin: 0 0 10px 0; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;';
+      instructionBox.appendChild(stallTitle);
+
+      const stalls = [...new Set(items.map(i => i.stallNumber))];
+      stalls.forEach(stall => {
+        const stallItems = items.filter(i => i.stallNumber === stall);
+        const li = document.createElement('p');
+        li.innerHTML = `<strong style="color:#d97706;">* ${stall}:</strong> ${stallItems.map(i => `${i.quantity}x ${i.name}`).join(', ')} <em style="color:#9ca3af;">(Pickup: ${pickup})</em>`;
+        li.style.cssText = 'font-size: 13px; color: #1f2937; margin: 6px 0;';
+        instructionBox.appendChild(li);
+      });
+      container.appendChild(instructionBox);
+
+      // Footer branding
+      const footer = document.createElement('p');
+      footer.textContent = '🌐 UniFlow Events';
+      footer.style.cssText = 'font-size: 12px; color: #9ca3af; margin-top: 20px; font-weight: 600;';
+      container.appendChild(footer);
+
+      // Capture
+      const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#f0fdf4' });
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgH = (canvas.height * pdfWidth) / canvas.width;
+      const marginTop = (pdf.internal.pageSize.getHeight() - imgH) / 2;
+      pdf.addImage(imgData, 'PNG', 0, Math.max(0, marginTop), pdfWidth, imgH);
+      pdf.save(`UniFlow_FoodPass_${Date.now()}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate PDF pass:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (orderStatus === 'success' && qrString && orderedItems.length > 0) {
+      const timer = setTimeout(() => {
+        downloadOrderPass({ qr: qrString, pickup: pickupSlot, items: orderedItems });
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [orderStatus]);
+
   const addToCart = async (item) => {
     if (item.stockCount <= 0) return;
     const existing = cart.find((i) => i._id === item._id);
-    if (existing && existing.quantity >= item.stockCount) return;
+    const currentQty = existing ? existing.quantity : 0;
+
+    // ── Frontend: enforce per-item quantity cap ──
+    if (currentQty >= MAX_QTY_PER_ITEM) {
+      setErrorMessage(`Maximum ${MAX_QTY_PER_ITEM} of "${item.name}" per order.`);
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+    if (currentQty >= item.stockCount) {
+      setErrorMessage(`Only ${item.stockCount} left in stock for "${item.name}".`);
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
 
     try {
       const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
-      await axios.post('http://localhost:5001/api/food/lock', {
+      await axios.post('http://localhost:5002/api/food/lock', {
         ticketId: localStorage.getItem('eventTicketId'),
         menuItemId: item._id,
         quantity: 1
@@ -75,7 +186,7 @@ export function FoodPage() {
   const removeFromCart = async (itemId) => {
     try {
       const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
-      await axios.delete('http://localhost:5001/api/food/lock', {
+      await axios.delete('http://localhost:5002/api/food/lock', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         data: { ticketId: localStorage.getItem('eventTicketId'), menuItemId: itemId }
       });
@@ -106,9 +217,17 @@ export function FoodPage() {
   const avgEcoScore = totalItems === 0 ? 0 : Math.round(cart.reduce((sum, item) => sum + item.ecoScore * item.quantity, 0) / totalItems);
 
   const handleCheckout = async () => {
-    if (cart.length === 0) return;
+    // ── Frontend guards ──────────────────────────────────────────────────────
+    if (cart.length === 0) {
+      setErrorMessage('Your cart is empty. Add at least one item before checking out.');
+      return;
+    }
     if (!pickupSlot) {
-      setErrorMessage('Please select a pickup slot');
+      setErrorMessage('Please select a pickup time slot before placing your order.');
+      return;
+    }
+    if (total < MIN_ORDER_AMOUNT) {
+      setErrorMessage(`Minimum order amount is Rs. ${MIN_ORDER_AMOUNT}. Current total: Rs. ${total.toFixed(2)}.`);
       return;
     }
 
@@ -120,7 +239,7 @@ export function FoodPage() {
       const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
       
       const res = await axios.post(
-        'http://localhost:5001/api/food',
+        'http://localhost:5002/api/food',
         {
           ticketId,
           items: cart.map(i => ({ menuItem: i._id, name: i.name, quantity: i.quantity, price: i.price, stallNumber: i.stallNumber })),
@@ -144,7 +263,15 @@ export function FoodPage() {
       setCart([]);
     } catch (err) {
       console.error(err);
-      setErrorMessage(err.response?.data?.msg || 'Failed to place order.');
+      const status = err.response?.status;
+      const serverMsg = err.response?.data?.msg || 'Failed to place order.';
+      if (status === 409) {
+        setErrorMessage('⚠️ ' + serverMsg); // duplicate ticket
+      } else if (status === 400) {
+        setErrorMessage('❌ ' + serverMsg);
+      } else {
+        setErrorMessage('Server error. Please try again.');
+      }
       setOrderStatus('error');
     }
   };
@@ -154,11 +281,11 @@ export function FoodPage() {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <main className="pt-24 px-4 pb-16 flex flex-col items-center justify-center text-center">
-          <div className="bg-green-50 p-8 rounded-2xl shadow-sm border border-green-100 max-w-md w-full">
+          <div ref={passRef} className="bg-green-50 p-8 rounded-2xl shadow-sm border border-green-100 max-w-md w-full">
             <h2 className="text-3xl font-bold text-green-700 mb-4">Order Successful!</h2>
             <p className="text-gray-700 mb-6 font-medium text-lg">Present this QR code at your selected pickup slot ({pickupSlot}).</p>
-            <div className="bg-white p-4 rounded-xl shadow-inner inline-block mb-6">
-              <QRCodeSVG value={qrString} size={200} />
+            <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-inner inline-block mb-6">
+              <QRCodeCanvas value={qrString} size={200} includeMargin={true} />
             </div>
 
             <div className="text-left bg-white p-5 rounded-xl shadow-sm border border-gray-100 w-full mb-6">
@@ -203,7 +330,7 @@ export function FoodPage() {
                 setRewardEligible(false);
                 setEcoVoucher(false);
               }}
-              className="mt-8 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold"
+              className="mt-8 px-8 py-3 bg-amber-400 text-zinc-950 rounded-xl hover:bg-amber-300 transition-all font-black shadow-lg shadow-amber-200 active:scale-95"
             >
               Back to Menu
             </button>
@@ -244,14 +371,14 @@ export function FoodPage() {
                 <span className="font-extrabold text-2xl text-amber-500">Rs. {item.price.toFixed(2)}</span>
                 <button
                   onClick={() => addToCart(item)}
-                  disabled={item.stockCount === 0}
+                   disabled={item.stockCount === 0 || (cart.find(c => c._id === item._id)?.quantity || 0) >= Math.min(MAX_QTY_PER_ITEM, item.stockCount)}
                   className={`px-4 py-2 rounded-lg font-bold transition-colors ${
-                    item.stockCount === 0 
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    item.stockCount === 0 || (cart.find(c => c._id === item._id)?.quantity || 0) >= Math.min(MAX_QTY_PER_ITEM, item.stockCount)
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-amber-400 hover:bg-amber-500 text-gray-900'
                   }`}
                 >
-                  {item.stockCount === 0 ? 'Out of Stock' : 'Add to Cart'}
+                  {item.stockCount === 0 ? 'Out of Stock' : cart.find(c => c._id === item._id)?.quantity >= MAX_QTY_PER_ITEM ? 'Max Reached' : 'Add to Cart'}
                 </button>
               </div>
             </div>
@@ -314,7 +441,7 @@ export function FoodPage() {
                         ) : (
                            <span className="font-bold text-gray-900">Rs. {(item.price * item.quantity).toFixed(2)}</span>
                         )}
-                        <button onClick={() => removeFromCart(item._id)} className="text-red-500 hover:text-red-700 text-sm font-bold bg-red-50 px-2 py-1 rounded-md">Remove</button>
+                        <button onClick={() => removeFromCart(item._id)} className="text-zinc-950 font-black bg-amber-400 hover:bg-amber-300 px-3 py-1.5 rounded-lg text-xs shadow-sm shadow-amber-200 transition-all active:scale-95">Remove</button>
                       </div>
                     </div>
                   ))}
@@ -370,10 +497,15 @@ export function FoodPage() {
                 <button
                   onClick={handleCheckout}
                   disabled={cart.length === 0 || orderStatus === 'loading'}
-                  className="w-full bg-gray-900 text-white font-bold py-4 px-4 rounded-xl hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                  className="w-full bg-amber-400 text-zinc-950 font-black py-4 px-4 rounded-xl hover:bg-amber-300 disabled:bg-amber-200 disabled:cursor-not-allowed transition-all shadow-xl shadow-amber-200 active:scale-95 text-xl mt-4"
                 >
                   {orderStatus === 'loading' ? 'Processing...' : 'Complete Checkout'}
                 </button>
+                {total > 0 && total < MIN_ORDER_AMOUNT && (
+                  <p className="text-xs text-orange-600 font-bold mt-2 text-center">
+                    ⚠️ Minimum order is Rs. {MIN_ORDER_AMOUNT}. Add Rs. {(MIN_ORDER_AMOUNT - total).toFixed(2)} more.
+                  </p>
+                )}
                 {total > 2000 && (
                  <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-2 text-center">
                   <p className="text-xs text-green-700 font-bold">✨ You qualify for a post-event Free Item Reward Token!</p>

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   CalendarIcon,
   MapPinIcon,
   UsersIcon,
   SparklesIcon,
-  CheckIcon } from
+  CheckIcon,
+  MessageSquare } from
 'lucide-react';
 import { RegistrationModal } from './RegistrationModal';
 import { useAuth } from '../context/AuthContext';
@@ -13,10 +15,12 @@ export function EventDiscovery() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const handleRegister = (event) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
+  const handleFeedback = () => navigate('/feedback');
 
   // Mock function to check if registered
   const isRegistered = (eventId) => {
@@ -48,11 +52,10 @@ export function EventDiscovery() {
             Discover Events
           </span>
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Upcoming <span className="text-amber-400">Events</span>
+            Past <span className="text-amber-400">Events</span>
           </h2>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Explore exciting events happening on campus. Register now to secure
-            your spot.
+            Browse events you've attended on campus and share your experience.
           </p>
         </motion.div>
 
@@ -145,21 +148,10 @@ export function EventDiscovery() {
                 </button> :
 
               <button
-                onClick={() =>
-                handleRegister({
-                  id: '1',
-                  title: 'Tech Innovation Summit',
-                  date: 'Mar 15, 2026',
-                  time: '2:00 PM',
-                  location: 'Main Auditorium',
-                  image: '',
-                  attendees: 234,
-                  category: 'Tech'
-                })
-                }
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-
-                  Register Now
+                onClick={handleFeedback}
+                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] flex items-center justify-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Feedback
                 </button>
               }
             </div>
@@ -229,21 +221,10 @@ export function EventDiscovery() {
                 </button> :
 
               <button
-                onClick={() =>
-                handleRegister({
-                  id: '2',
-                  title: 'Spring Music Festival',
-                  date: 'Mar 20, 2026',
-                  time: '7:00 PM',
-                  location: 'Campus Lawn',
-                  image: '',
-                  attendees: 512,
-                  category: 'Music'
-                })
-                }
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-
-                  Register Now
+                onClick={handleFeedback}
+                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] flex items-center justify-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Feedback
                 </button>
               }
             </div>
@@ -298,21 +279,10 @@ export function EventDiscovery() {
                 </span>
               </div>
               <button
-                onClick={() =>
-                handleRegister({
-                  id: '3',
-                  title: 'Spring Career Fair',
-                  date: 'Mar 25, 2026',
-                  time: '10:00 AM',
-                  location: 'Student Center',
-                  image: '',
-                  attendees: 389,
-                  category: 'Career'
-                })
-                }
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-
-                Register Now
+                onClick={handleFeedback}
+                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] flex items-center justify-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Feedback
               </button>
             </div>
           </motion.div>
@@ -366,21 +336,10 @@ export function EventDiscovery() {
                 </span>
               </div>
               <button
-                onClick={() =>
-                handleRegister({
-                  id: '4',
-                  title: 'Student Art Exhibition',
-                  date: 'Apr 1, 2026',
-                  time: '6:00 PM',
-                  location: 'Art Gallery',
-                  image: '',
-                  attendees: 156,
-                  category: 'Art'
-                })
-                }
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-
-                Register Now
+                onClick={handleFeedback}
+                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] flex items-center justify-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Feedback
               </button>
             </div>
           </motion.div>
@@ -407,8 +366,8 @@ export function EventDiscovery() {
 
             <div className="relative h-48 overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=400&fit=crop"
-                alt="Sports Tournament event"
+                src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&h=400&fit=crop"
+                alt="Intramural Basketball Finals"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
 
               <div className="absolute top-4 left-4 bg-green-400 text-zinc-950 font-bold text-sm px-3 py-1 rounded-full shadow-md">
@@ -434,21 +393,10 @@ export function EventDiscovery() {
                 </span>
               </div>
               <button
-                onClick={() =>
-                handleRegister({
-                  id: '5',
-                  title: 'Intramural Basketball Finals',
-                  date: 'Apr 5, 2026',
-                  time: '9:00 AM',
-                  location: 'Sports Complex',
-                  image: '',
-                  attendees: 278,
-                  category: 'Sports'
-                })
-                }
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-
-                Register Now
+                onClick={handleFeedback}
+                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] flex items-center justify-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Feedback
               </button>
             </div>
           </motion.div>
@@ -502,21 +450,10 @@ export function EventDiscovery() {
                 </span>
               </div>
               <button
-                onClick={() =>
-                handleRegister({
-                  id: '6',
-                  title: 'Leadership Workshop',
-                  date: 'Apr 10, 2026',
-                  time: '3:00 PM',
-                  location: 'Conference Room B',
-                  image: '',
-                  attendees: 45,
-                  category: 'Workshop'
-                })
-                }
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-
-                Register Now
+                onClick={handleFeedback}
+                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_0_20px_rgba(251,191,36,0.25)] flex items-center justify-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Feedback
               </button>
             </div>
           </motion.div>

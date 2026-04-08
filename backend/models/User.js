@@ -6,6 +6,9 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['student', 'organizer'], default: 'student' },
+    isActive: { type: Boolean, default: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
     eventsAttended: { type: Number, default: 0 },
     activeVouchers: [{ type: String }],
     createdAt: { type: Date, default: Date.now }

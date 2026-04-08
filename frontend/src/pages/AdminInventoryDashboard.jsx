@@ -20,7 +20,7 @@ export function AdminInventoryDashboard() {
   const fetchMenu = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5001/api/food/menu');
+      const res = await axios.get('http://localhost:5002/api/food/menu');
       setMenuItems(res.data);
     } catch (err) {
       console.error(err);
@@ -38,19 +38,21 @@ export function AdminInventoryDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to completely delete this item from the active database?')) return;
     try {
-      await axios.delete(`http://localhost:5001/api/food/menu/${id}`, { headers: getAuthHeader() });
+      await axios.delete(`http://localhost:5002/api/food/menu/${id}`, { headers: getAuthHeader() });
       setMenuItems(menuItems.filter(item => item._id !== id));
     } catch (err) {
       alert('Failed to delete item.');
     }
   };
 
-  const handleUpdateStock = async (id, newStock) => {
+  const handleUpdateItem = async (id, field, value) => {
     try {
-      const res = await axios.put(`http://localhost:5001/api/food/menu/${id}`, { stockCount: Number(newStock) }, { headers: getAuthHeader() });
+      const payload = { [field]: field === 'price' || field === 'stockCount' ? Number(value) : value };
+      const res = await axios.put(`http://localhost:5002/api/food/menu/${id}`, payload, { headers: getAuthHeader() });
       setMenuItems(menuItems.map(item => item._id === id ? res.data : item));
     } catch (err) {
-      alert('Failed to update stock globally.');
+      console.error(err);
+      alert(`Failed to update ${field} globally.`);
     }
   };
 
@@ -58,7 +60,7 @@ export function AdminInventoryDashboard() {
     e.preventDefault();
     try {
       const payload = { ...newItem, price: Number(newItem.price), stockCount: Number(newItem.stockCount), ecoScore: Number(newItem.ecoScore) };
-      const res = await axios.post('http://localhost:5001/api/food/menu', payload, { headers: getAuthHeader() });
+      const res = await axios.post('http://localhost:5002/api/food/menu', payload, { headers: getAuthHeader() });
       setMenuItems([...menuItems, res.data]);
       setShowModal(false);
       setNewItem({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1', image: '' });
@@ -106,17 +108,27 @@ export function AdminInventoryDashboard() {
                       <td className="p-4">
                         <span className="text-xs uppercase font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded">{item.stallNumber || 'General'}</span>
                       </td>
-                      <td className="p-4 font-medium text-gray-700">Rs. {item.price}</td>
+                      <td className="p-4 font-medium text-gray-700">
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400 text-sm">Rs.</span>
+                          <input 
+                            type="number" 
+                            className="w-24 border border-gray-300 rounded px-2 py-1 text-center font-bold focus:ring-2 focus:ring-amber-400 outline-none"
+                            value={item.price}
+                            onChange={(e) => handleUpdateItem(item._id, 'price', e.target.value)}
+                          />
+                        </div>
+                      </td>
                       <td className="p-4 text-center">
                         <input 
                           type="number" 
                           className="w-20 border border-gray-300 rounded px-2 py-1 text-center font-bold focus:ring-2 focus:ring-amber-400 outline-none"
                           value={item.stockCount}
-                          onChange={(e) => handleUpdateStock(item._id, e.target.value)}
+                          onChange={(e) => handleUpdateItem(item._id, 'stockCount', e.target.value)}
                         />
                       </td>
                       <td className="p-4 text-center">
-                        <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:bg-red-50 px-3 py-1 rounded font-bold text-sm transition-colors border border-transparent hover:border-red-200">
+                        <button onClick={() => handleDelete(item._id)} className="bg-amber-400 text-zinc-950 hover:bg-amber-300 px-3 py-1 rounded font-bold text-sm transition-all border border-amber-500/20 active:scale-95">
                           Delete
                         </button>
                       </td>
@@ -177,8 +189,8 @@ export function AdminInventoryDashboard() {
                 <input type="text" value={newItem.image} onChange={e => setNewItem({...newItem, image: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" placeholder="/images/default.png" />
               </div>
               <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
-                <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-2 rounded-lg font-bold shadow-sm transition-colors">Inject Schema</button>
+                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 text-gray-500 font-bold hover:text-zinc-950 transition-colors">Cancel</button>
+                <button type="submit" className="bg-amber-400 hover:bg-amber-300 text-zinc-950 px-6 py-2 rounded-lg font-black shadow-lg shadow-amber-400/20 transition-all active:scale-95">Inject Schema</button>
               </div>
             </form>
           </div>

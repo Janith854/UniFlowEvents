@@ -49,7 +49,7 @@ export function ApprovalQueue() {
             {events.map((event) => (
               <div key={event._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                 {event.image && (
-                  <img src={`http://localhost:5001${event.image}`} alt={event.title} className="w-full h-48 object-cover" />
+                  <img src={event.image.startsWith('http') ? event.image : `http://localhost:5002${event.image}`} alt={event.title} className="w-full h-48 object-cover" />
                 )}
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
@@ -62,13 +62,13 @@ export function ApprovalQueue() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleStatusUpdate(event._id, 'Approved')}
-                      className="flex-1 bg-green-500 text-white font-medium py-2 rounded-lg hover:bg-green-600 transition-colors flex justify-center items-center"
+                      className="flex-1 bg-amber-400 text-zinc-950 font-black py-3 rounded-xl hover:bg-amber-300 transition-all shadow-md active:scale-95 flex justify-center items-center"
                     >
                       <Check className="w-4 h-4 mr-1" /> Approve
                     </button>
                     <button
                       onClick={() => handleStatusUpdate(event._id, 'Rejected')}
-                      className="flex-1 bg-red-500 text-white font-medium py-2 rounded-lg hover:bg-red-600 transition-colors flex justify-center items-center"
+                      className="flex-1 bg-amber-400 text-zinc-950 font-black py-3 rounded-xl hover:bg-amber-300 transition-all shadow-md active:scale-95 flex justify-center items-center border border-zinc-950/10"
                     >
                       <X className="w-4 h-4 mr-1" /> Reject
                     </button>

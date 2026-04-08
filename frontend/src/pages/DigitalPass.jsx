@@ -86,10 +86,10 @@ export function DigitalPass() {
 
         <button 
           onClick={downloadPDF}
-          className="mt-8 bg-zinc-950 text-white px-8 py-4 rounded-full font-bold hover:bg-zinc-800 transition-all flex items-center gap-2 shadow-lg"
+          className="mt-8 bg-amber-400 text-zinc-950 px-10 py-5 rounded-full font-black hover:bg-amber-300 transition-all flex items-center gap-3 shadow-2xl shadow-amber-200 active:scale-95"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
           Download PDF Pass
         </button>
