@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
-import { User, Mail, Lock, Sparkles, ArrowRight, UserCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, UserCircle, Eye, EyeOff } from 'lucide-react';
 
 export function LoginPage() {
   const { login, register } = useAuth();
@@ -98,41 +98,37 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen relative overflow-hidden flex flex-col">
+      <div className="absolute inset-0 bg-[url('/images/logging.jpg')] bg-cover bg-center" />
+      <div className="absolute inset-0 bg-black/40" />
       <Navbar />
-      
-      <main className="flex-1 flex items-center justify-center p-4 pt-24 pb-12">
-        <motion.div 
+
+      <main className="relative z-10 flex-1 flex items-center justify-center p-4 pt-28 pb-12">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[440px]"
+          className="w-full max-w-xl"
         >
-          {/* Brand/Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-400 rounded-2xl shadow-xl shadow-amber-400/20 mb-6">
-              <Sparkles className="w-8 h-8 text-zinc-950" />
+          <div className="backdrop-blur-[20px] bg-white/80 rounded-[28px] shadow-2xl border border-white/30 p-8 sm:p-10">
+            {/* Brand/Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
+                {isLogin ? 'Welcome Back' : 'Join UniFlow'}
+              </h1>
+              <p className="text-gray-700 font-medium">
+                {isLogin ? 'Sign in to access your campus universe' : 'Create an account to start your journey'}
+              </p>
             </div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">
-              {isLogin ? 'Welcome Back' : 'Join UniFlow'}
-            </h1>
-            <p className="text-gray-500 font-medium">
-              {isLogin ? 'Sign in to access your campus universe' : 'Create an account to start your journey'}
-            </p>
-          </div>
 
-          <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            {/* Redundant tabs removed as requested */}
-
-            <div className="p-8">
-              <AnimatePresence mode="wait">
-                <motion.form 
-                  key={isLogin ? 'login' : 'register'}
-                  initial={{ opacity: 0, x: isLogin ? -10 : 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: isLogin ? 10 : -10 }}
-                  onSubmit={handleSubmit} 
-                  className="space-y-6"
-                >
+            <AnimatePresence mode="wait">
+              <motion.form
+                key={isLogin ? 'login' : 'register'}
+                initial={{ opacity: 0, x: isLogin ? -10 : 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: isLogin ? 10 : -10 }}
+                onSubmit={handleSubmit}
+                className="space-y-6"
+              >
                   {error && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -272,13 +268,12 @@ export function LoginPage() {
                       )}
                     </button>
                   </div>
-                </motion.form>
-              </AnimatePresence>
-            </div>
+              </motion.form>
+            </AnimatePresence>
           </div>
 
-          <p className="mt-8 text-center text-sm font-bold text-gray-500 px-4">
-            By continuing, you agree to UniFlow's <span className="text-gray-900 underline underline-offset-4 cursor-pointer">Terms of Service</span> and <span className="text-gray-900 underline underline-offset-4 cursor-pointer">Privacy Policy</span>.
+          <p className="mt-6 text-center text-sm font-bold text-white/80 px-4">
+            By continuing, you agree to UniFlow's <span className="text-white underline underline-offset-4 cursor-pointer">Terms of Service</span> and <span className="text-white underline underline-offset-4 cursor-pointer">Privacy Policy</span>.
           </p>
         </motion.div>
       </main>

@@ -105,6 +105,11 @@ export function AuthProvider({ children }) {
     return response.data;
   };
 
+  const createUser = async (payload) => {
+    const response = await userService.createUser(payload);
+    return response.data;
+  };
+
   const editUser = async (id, payload) => {
     const response = await userService.updateUser(id, payload);
     return response.data;
@@ -137,6 +142,7 @@ export function AuthProvider({ children }) {
         updateProfile,
         updatePassword,
         listUsers,
+        createUser,
         editUser,
         removeUser
       }}

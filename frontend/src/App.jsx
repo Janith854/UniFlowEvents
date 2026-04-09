@@ -107,7 +107,14 @@ export function App() {
             </TicketRoute>
           }
         />
-        <Route path="/parking" element={<ParkingPage />} />
+        <Route
+          path="/parking"
+          element={
+            <ProtectedRoute>
+              <ParkingPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/parking/success" element={<DigitalPass />} />
         <Route
           path="/admin/food"
