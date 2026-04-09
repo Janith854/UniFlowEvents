@@ -63,9 +63,7 @@ export function AuthProvider({ children }) {
 
   const register = async ({ name, email, password, role }) => {
     const response = await authService.signup({ name, email, password, role });
-    const { token: nextToken, user: nextUser } = response.data;
-    saveSession(nextToken, nextUser);
-    return nextUser;
+    return response.data.user;
   };
 
   const login = async ({ email, password }) => {

@@ -8,6 +8,7 @@ const sanitizeUser = (user) => ({
     isActive: user.isActive,
     eventsAttended: user.eventsAttended,
     activeVouchers: user.activeVouchers,
+    inbox: user.inbox || [],
     createdAt: user.createdAt,
 });
 

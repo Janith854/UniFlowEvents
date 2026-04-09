@@ -27,6 +27,8 @@ export function ProfilePage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('edit');
+  const feedbackReplies = (user?.inbox || []).filter((item) => item.type === 'feedback-reply');
+  const joinedYear = user?.createdAt ? new Date(user.createdAt).getFullYear() : '---';
 
   const colors = getRoleColor(role);
 
@@ -106,9 +108,9 @@ export function ProfilePage() {
           {/* Stats Row */}
           <div className="flex items-center gap-6 mt-2">
             {[
-              { label: 'Events', value: '6', icon: Star },
-              { label: 'Feedbacks', value: '3', icon: MessageSquare },
-              { label: 'Since', value: '2026', icon: CheckCircle },
+              { label: 'Events', value: String(user?.eventsAttended ?? 0), icon: Star },
+              { label: 'Replies', value: String(feedbackReplies.length), icon: MessageSquare },
+              { label: 'Since', value: String(joinedYear), icon: CheckCircle },
             ].map(({ label, value, icon: Icon }) => (
               <div key={label} className="flex flex-col items-center gap-0.5">
                 <div className="flex items-center gap-1 text-white/60 text-xs">
@@ -273,6 +275,31 @@ export function ProfilePage() {
                     </button>
                   </div>
                 </form>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-amber-400" />
+              <h3 className="text-sm font-black text-gray-900">Feedback Replies</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              {feedbackReplies.length === 0 ? (
+                <p className="text-sm text-gray-500">No feedback replies yet.</p>
+              ) : (
+                feedbackReplies
+                  .slice()
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .map((item) => (
+                    <div key={item._id || item.createdAt} className="border border-gray-100 rounded-2xl p-4 bg-gray-50/60">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-gray-900">{item.title || 'Feedback reply'}</p>
+                        <span className="text-xs text-gray-400">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">{item.message}</p>
+                    </div>
+                  ))
               )}
             </div>
           </div>

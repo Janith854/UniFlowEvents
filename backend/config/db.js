@@ -3,6 +3,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
 const Event = require('../models/Event');
+const Feedback = require('../models/Feedback');
 
 const connectDB = async () => {
     try {
@@ -33,6 +34,24 @@ const connectDB = async () => {
         });
         console.log('MongoDB connection SUCCESS');
         console.log('MongoDB connection SUCCESS');
+
+        const cleanupFeedbackIndexes = async () => {
+            try {
+                const indexes = await Feedback.collection.indexes();
+                const legacyIndex = indexes.find(
+                    (idx) => idx.name === 'userId_1_eventId_1' || (idx.key?.userId === 1 && idx.key?.eventId === 1)
+                );
+                if (legacyIndex) {
+                    await Feedback.collection.dropIndex(legacyIndex.name);
+                    console.log(`Dropped legacy feedback index: ${legacyIndex.name}`);
+                }
+            } catch (err) {
+                if (err.codeName === 'NamespaceNotFound') return;
+                console.warn('Feedback index cleanup skipped:', err.message);
+            }
+        };
+
+        await cleanupFeedbackIndexes();
         
         // Seed database
         const count = await MenuItem.countDocuments();

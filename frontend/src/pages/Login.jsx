@@ -20,6 +20,7 @@ export function LoginPage() {
   const [name, setName] = useState('');
   const [role, setRole] = useState('student');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +35,7 @@ export function LoginPage() {
       }
     }
     if (name === 'password') {
-      if (value.length < 8) err = 'Password must be at least 8 characters';
+      if (value.length < 6) err = 'Password must be at least 6 characters';
     }
     setFieldErrors(prev => ({ ...prev, [name]: err }));
     return err === '';
@@ -43,6 +44,7 @@ export function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     
     // Final check
     // For login: only check basic email format, not domain
@@ -78,12 +80,11 @@ export function LoginPage() {
           navigate('/', { replace: true });
         }
       } else {
-        const registeredUser = await register({ name, email, password, role });
-        if (registeredUser?.role === 'organizer') {
-          navigate('/dashboard', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+        await register({ name, email, password, role });
+        setSuccess('Account created. Please sign in to continue.');
+        setIsLogin(true);
+        setPassword('');
+        navigate('/login', { replace: true });
       }
     } catch (err) {
       if (!err.response) {
@@ -139,6 +140,15 @@ export function LoginPage() {
                       className="p-4 bg-red-50 border border-red-100 text-red-600 text-sm font-semibold rounded-2xl text-center"
                     >
                       {error}
+                    </motion.div>
+                  )}
+                  {success && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-semibold rounded-2xl text-center"
+                    >
+                      {success}
                     </motion.div>
                   )}
                   {!isLogin && (
@@ -250,6 +260,7 @@ export function LoginPage() {
                       onClick={() => { 
                         setIsLogin(!isLogin); 
                         setError(''); 
+                        setSuccess('');
                         navigate(isLogin ? '/register' : '/login');
                       }}
                       className="text-sm font-bold text-gray-500 hover:text-amber-500 transition-colors"
