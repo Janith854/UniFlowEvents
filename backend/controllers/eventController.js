@@ -50,18 +50,25 @@ exports.createEvent = async (req, res) => {
 
 exports.updateEvent = async (req, res) => {
     try {
+        const event = await Event.findById(req.params.id);
+        if (!event) return res.status(404).json({ msg: 'Event not found' });
+
+        // Only the organizer who created the event can update it
+        if (event.organizer && event.organizer.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ msg: 'Not authorized to edit this event' });
+        }
+
         const body = { ...req.body };
         if (req.file) {
             body.image = `/uploads/${req.file.filename}`;
         }
-        
+
         if (typeof body.ticketing === 'string') {
             try { body.ticketing = JSON.parse(body.ticketing); } catch (e) {}
         }
 
-        const event = await Event.findByIdAndUpdate(req.params.id, body, { new: true });
-        if (!event) return res.status(404).json({ msg: 'Event not found' });
-        res.json(event);
+        const updatedEvent = await Event.findByIdAndUpdate(req.params.id, body, { new: true });
+        res.json(updatedEvent);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -69,6 +76,14 @@ exports.updateEvent = async (req, res) => {
 
 exports.deleteEvent = async (req, res) => {
     try {
+        const event = await Event.findById(req.params.id);
+        if (!event) return res.status(404).json({ msg: 'Event not found' });
+
+        // Only the organizer who created the event can delete it
+        if (event.organizer && event.organizer.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ msg: 'Not authorized to delete this event' });
+        }
+
         await Event.findByIdAndDelete(req.params.id);
         res.json({ msg: 'Event deleted successfully' });
     } catch (err) {
@@ -85,29 +100,43 @@ exports.generateTicket = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ msg: 'User not found' });
 
+        // Track whether this is a brand-new registration
+        const alreadyRegistered = event.participants.some(
+            (p) => p.toString() === user._id.toString()
+        );
+
         // Add to participants if not already in
-        if (!event.participants.includes(user._id)) {
+        if (!alreadyRegistered) {
             event.participants.push(user._id);
             await event.save();
+
+            // Only increment the counter on first registration — prevents voucher farming
+            user.eventsAttended += 1;
+
+            let rewardIssued = false;
+            if (user.eventsAttended % 5 === 0) {
+                user.activeVouchers.push('5_EVENT_SNACK_REWARD');
+                rewardIssued = true;
+            }
+
+            await user.save();
+
+            const ticketId = 'TKT-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+            return res.status(200).json({
+                msg: 'Ticket generated successfully',
+                ticketId,
+                eventsAttended: user.eventsAttended,
+                rewardIssued
+            });
         }
 
-        user.eventsAttended += 1;
-        
-        let rewardIssued = false;
-        if (user.eventsAttended % 5 === 0) {
-            user.activeVouchers.push('5_EVENT_SNACK_REWARD');
-            rewardIssued = true;
-        }
-
-        await user.save();
-        
+        // Already registered — return existing ticket info without incrementing
         const ticketId = 'TKT-' + crypto.randomBytes(4).toString('hex').toUpperCase();
-
-        res.status(200).json({ 
-            msg: 'Ticket generated successfully', 
+        return res.status(200).json({
+            msg: 'You are already registered for this event',
             ticketId,
             eventsAttended: user.eventsAttended,
-            rewardIssued
+            rewardIssued: false
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
