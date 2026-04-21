@@ -214,10 +214,13 @@ export function AdminFoodDashboard() {
                               <li key={idx} className="flex flex-col gap-1 mb-2">
                                 {i.image && (
                                   <img
-                                    src={String(i.image).startsWith('http') ? i.image : `http://localhost:5002${i.image}`}
+                                    src={i.image}
                                     alt={i.name}
                                     className="w-12 h-12 rounded-lg object-cover border border-gray-100"
-                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                    onError={(e) => { 
+                                      e.target.onerror = null; 
+                                      e.target.src = 'https://placehold.co/100x100?text=Food';
+                                    }}
                                   />
                                 )}
                                 <span><span className="font-bold text-gray-900">{i.quantity}x</span> {i.name}</span>

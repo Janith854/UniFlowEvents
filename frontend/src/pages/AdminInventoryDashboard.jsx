@@ -141,9 +141,9 @@ export function AdminInventoryDashboard() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" className="p-4 text-center text-gray-500">Loading inventory sequence...</td></tr>
+                  <tr><td colSpan="8" className="p-4 text-center text-gray-500">Loading inventory sequence...</td></tr>
                 ) : menuItems.length === 0 ? (
-                  <tr><td colSpan="6" className="p-4 text-center text-gray-500">No active menu items found sequentially.</td></tr>
+                  <tr><td colSpan="8" className="p-4 text-center text-gray-500">No active menu items found sequentially.</td></tr>
                 ) : (
                   menuItems
                     .filter(item => {
@@ -157,10 +157,13 @@ export function AdminInventoryDashboard() {
                         <td className="p-4">
                           {item.image ? (
                             <img 
-                              src={item.image.startsWith('http') ? item.image : `http://localhost:5002${item.image}`} 
+                              src={item.image} 
                               alt={item.name} 
-                              className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm"
-                              onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=No+Image'; }}
+                              className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm bg-gray-50"
+                              onError={(e) => { 
+                                e.target.onerror = null; 
+                                e.target.src = 'https://placehold.co/100x100?text=Food'; 
+                              }}
                             />
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
