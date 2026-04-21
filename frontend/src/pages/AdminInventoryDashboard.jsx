@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export function AdminInventoryDashboard() {
   const { token } = useAuth();
@@ -89,8 +90,7 @@ export function AdminInventoryDashboard() {
       setLoading(true);
       const res = await axios.post('http://localhost:5002/api/food/upload', formData, {
         headers: {
-          ...getAuthHeader(),
-          'Content-Type': 'multipart/form-data'
+          ...getAuthHeader()
         }
       });
       setNewItem({ ...newItem, image: res.data.path });
