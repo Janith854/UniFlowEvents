@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Calendar, Lock, X, CheckCircle } from 'lucide-react';
 
-export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
+export function PaymentModal({ isOpen, onClose, onConfirm, reservationData, amount = 1000 }) {
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiry: '',
@@ -99,9 +99,14 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
       const data = await onConfirm();
       setIsSuccess(true);
       
-      // Delay to show success state before redirecting
+      // Delay to show success state before closing/redirecting
       setTimeout(() => {
-        window.location.href = data.url;
+        if (data && data.url) {
+          window.location.href = data.url;
+        } else {
+          // If no redirect URL, just leave it in success state briefly
+          // The parent component is responsible for closing the modal
+        }
       }, 2000);
     } catch (err) {
       // Error handling is managed by onConfirm in ParkingPage
@@ -142,7 +147,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                   <p className="text-sm font-bold text-zinc-900">Slot {reservationData.slotNumber} • {reservationData.zone} Zone</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-lg font-black text-zinc-900">Rs. 1,000</p>
+                    <p className="text-lg font-black text-zinc-900">Rs. {amount.toLocaleString()}</p>
                 </div>
               </div>
 
@@ -251,7 +256,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData }) {
                   ) : (
                     <>
                       <Lock size={16} />
-                      {isFormValid ? 'Pay Rs. 1,000' : 'Fill Card Details'}
+                      {isFormValid ? `Pay Rs. ${amount.toLocaleString()}` : 'Fill Card Details'}
                     </>
                   )}
                 </button>

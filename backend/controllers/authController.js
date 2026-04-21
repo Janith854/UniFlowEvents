@@ -1,19 +1,10 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { sanitizeUser } = require('../utils/sanitize');
 
 const createToken = (user) => {
     return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
-
-const sanitizeUser = (user) => ({
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    eventsAttended: user.eventsAttended,
-    activeVouchers: user.activeVouchers,
-    createdAt: user.createdAt,
-});
 
 exports.signup = async (req, res) => {
     try {
@@ -62,6 +53,11 @@ exports.login = async (req, res) => {
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
+
+        // Prevent deactivated accounts from logging in
+        if (user.isActive === false) {
+            return res.status(403).json({ msg: 'Your account has been deactivated. Please contact support.' });
+        }
 
         const token = createToken(user);
         res.json({ msg: 'Login successful', token, user: sanitizeUser(user) });

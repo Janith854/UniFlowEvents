@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { getFoodOrders, updateFoodOrder } from '../services/foodService';
+import toast from 'react-hot-toast';
+import io from 'socket.io-client';
 
 export function AdminFoodDashboard() {
   const { token } = useAuth();
@@ -18,19 +20,13 @@ export function AdminFoodDashboard() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const authStore = localStorage.getItem('uniflow_auth');
-      const authToken = authStore ? JSON.parse(authStore).token : null;
-      const res = await axios.get('http://localhost:5002/api/food', {
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
-      });
+      const res = await getFoodOrders();
       setOrders(Array.isArray(res.data) ? res.data : []);
       setError('');
     } catch (err) {
       console.error('Food orders fetch error:', err);
       if (err.response?.status === 401) {
         setError('⚠️ Not authorized. Please make sure you are logged in as an organizer.');
-      } else if (!err.response) {
-        setError('⚠️ Cannot connect to server. Is the backend running on port 5002?');
       } else {
         setError(`Failed to fetch orders: ${err.response?.data?.error || err.message}`);
       }
@@ -39,26 +35,64 @@ export function AdminFoodDashboard() {
     }
   };
 
+  useEffect(() => {
+    // Setup Socket connection
+    const socketURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002';
+    const socket = io(socketURL, { path: '/socket.io' });
+
+    socket.on('connect', () => {
+      console.log('AdminFoodDashboard connected to socket:', socket.id);
+    });
+
+    socket.on('food-order-status-changed', (updatedOrder) => {
+      setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
+      toast.success(`Order ${updatedOrder._id.substring(updatedOrder._id.length - 6)} status updated to ${updatedOrder.status}`);
+    });
+
+    socket.on('food-order-payment-confirmed', (updatedOrder) => {
+      setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
+      toast.success(`Order ${updatedOrder._id.substring(updatedOrder._id.length - 6)} payment confirmed!`);
+    });
+
+    // Also listen to new orders
+    // Actually, createFoodOrder doesn't emit an event currently, but we can just poll or rely on status updates.
+    // For now, updating status and payments is real-time.
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   const handleStatusToggle = async (orderId, currentStatus) => {
     const nextStatus = currentStatus === 'Pending' ? 'Ready' 
                      : currentStatus === 'Ready' ? 'Picked Up' 
                      : 'Pending';
     try {
-      const authToken = token || (localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null);
-      await axios.put(`http://localhost:5002/api/food/${orderId}`, 
-        { status: nextStatus },
-        { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-      );
-      fetchOrders();
+      await updateFoodOrder(orderId, { status: nextStatus });
+      // We don't strictly need to fetchOrders because socket will emit 'food-order-status-changed' and update it,
+      // but we can optimistic update or just let socket handle it. Let's let socket handle it, but also do it here for instant feedback.
+      setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: nextStatus } : o));
+      toast.success('Status updated successfully');
     } catch (err) {
       console.error('Failed to update status', err);
-      alert('Failed to update status.');
+      toast.error('Failed to update status.');
     }
   };
 
-  const filteredOrders = stallFilter === 'All Stalls' 
-    ? orders 
-    : orders.filter(o => o.items.some(i => (i.stallNumber || '').includes(stallFilter)));
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredOrders = orders.filter(o => {
+    // Stall filter
+    const matchesStall = stallFilter === 'All Stalls' || o.items.some(i => (i.stallNumber || '').includes(stallFilter));
+    // Search filter
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery || 
+      o._id.toLowerCase().includes(searchLower) || 
+      (o.ticketId && o.ticketId.toLowerCase().includes(searchLower)) ||
+      (o.qrString && o.qrString.toLowerCase().includes(searchLower));
+      
+    return matchesStall && matchesSearch;
+  });
 
   const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
 
@@ -87,10 +121,17 @@ export function AdminFoodDashboard() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <h1 className="text-3xl font-black text-gray-900">Admin Food Dashboard</h1>
             <div className="flex items-center gap-4 flex-wrap">
+              <input 
+                type="text"
+                placeholder="Search Order ID / Ticket"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 w-64 shadow-sm"
+              />
               <select 
                 value={stallFilter}
                 onChange={(e) => setStallFilter(e.target.value)}
-                className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500"
+                className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
               >
                 <option value="All Stalls">All Stalls</option>
                 <option value="Stall 1">Stall 1 (Hot Meals)</option>
@@ -145,9 +186,10 @@ export function AdminFoodDashboard() {
                     <th className="p-4 font-bold">Order ID / QR</th>
                     <th className="p-4 font-bold">User / Ticket</th>
                     <th className="p-4 font-bold">Items</th>
-                    <th className="p-4 font-bold">Total</th>
-                    <th className="p-4 font-bold">Pickup Slot</th>
-                    <th className="p-4 font-bold text-center">Status</th>
+                    <th className="p-4 font-bold text-center">Payment Info</th>
+                    <th className="p-4 font-bold text-right">Total</th>
+                    <th className="p-4 font-bold text-center">Pickup Slot</th>
+                    <th className="p-4 font-bold text-center">Fulfillment</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,16 +226,34 @@ export function AdminFoodDashboard() {
                             ))}
                           </ul>
                         </td>
-                        <td className="p-4 font-bold text-gray-900">Rs. {order.totalAmount.toFixed(2)}</td>
-                        <td className="p-4 font-medium text-gray-700">{order.pickupSlot}</td>
+                        <td className="p-4 text-center">
+                          <div className={`inline-flex flex-col items-center justify-center p-2 rounded-xl border ${
+                            order.paymentMethod === 'Card' ? 'bg-indigo-50 border-indigo-100' : 'bg-emerald-50 border-emerald-100'
+                          }`}>
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${
+                              order.paymentMethod === 'Card' ? 'text-indigo-600' : 'text-emerald-600'
+                            }`}>{order.paymentMethod || 'Unknown'}</span>
+                            <span className={`text-xs font-bold mt-1 ${
+                              order.paymentStatus === 'Paid' ? 'text-green-600' : 
+                              order.paymentStatus === 'Pay at Counter' ? 'text-amber-600' : 'text-gray-500'
+                            }`}>{order.paymentStatus || 'Pending'}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-black text-gray-900 text-right">Rs. {order.totalAmount.toFixed(2)}</td>
+                        <td className="p-4 font-bold text-gray-700 text-center">{order.pickupSlot}</td>
                         <td className="p-4 text-center">
                           <button
                             onClick={() => handleStatusToggle(order._id, order.status)}
-                            className="bg-amber-400 text-zinc-950 px-4 py-2 w-28 rounded-xl font-black text-xs transition-all shadow-md hover:bg-amber-300 active:scale-95 border border-amber-500/20"
+                            className={`px-4 py-2 w-28 rounded-xl font-black text-xs transition-all shadow-md active:scale-95 border ${
+                              order.status === 'Ready' ? 'bg-green-400 text-white border-green-500/20 hover:bg-green-500' :
+                              order.status === 'Picked Up' ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed shadow-none' :
+                              'bg-amber-400 text-zinc-950 border-amber-500/20 hover:bg-amber-300'
+                            }`}
+                            disabled={order.status === 'Picked Up'}
                           >
                             {order.status}
                           </button>
-                          <p className="text-[10px] text-gray-400 mt-1">Click to toggle</p>
+                          {order.status !== 'Picked Up' && <p className="text-[10px] text-gray-400 mt-1">Click to toggle</p>}
                         </td>
                       </tr>
                     ))

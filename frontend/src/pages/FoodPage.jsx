@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/Navbar';
-import axios from 'axios';
+import { getMenu, addCartLock, removeCartLock, createFoodOrder } from '../services/foodService';
+import { getMe } from '../services/authService';
+import toast from 'react-hot-toast';
+import { PaymentModal } from '../components/PaymentModal';
 import { QRCodeCanvas } from 'qrcode.react';
 import GaugeChart from 'react-gauge-chart';
 import { jsPDF } from 'jspdf';
@@ -13,11 +16,15 @@ const MIN_ORDER_AMOUNT = 100;
 export function FoodPage() {
   const { user } = useAuth();
   const [menuItems, setMenuItems] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem('uniflow_food_cart');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [pickupSlot, setPickupSlot] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Card');
   const [orderStatus, setOrderStatus] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [qrString, setQrString] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
   const [rewardEligible, setRewardEligible] = useState(false);
   const [orderedItems, setOrderedItems] = useState([]);
   const [ecoVoucher, setEcoVoucher] = useState(false);
@@ -26,11 +33,27 @@ export function FoodPage() {
   const qrRef = useRef();
 
   useEffect(() => {
+    localStorage.setItem('uniflow_food_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Cleanup orphaned locks if user leaves page
+  useEffect(() => {
+    return () => {
+      cart.forEach(item => {
+        removeCartLock({
+          ticketId: localStorage.getItem('eventTicketId'),
+          menuItemId: item._id
+        }).catch(console.error);
+      });
+    };
+  }, [cart]);
+
+  useEffect(() => {
     const fetchLatestUser = async () => {
       try {
-        const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
+        const token = localStorage.getItem('uniflow_auth');
         if (token) {
-          const res = await axios.get('http://localhost:5002/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+          const res = await getMe();
           if (res.data && res.data.user && res.data.user.activeVouchers) {
              setActiveVouchers(res.data.user.activeVouchers);
           }
@@ -45,7 +68,7 @@ export function FoodPage() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await axios.get('http://localhost:5002/api/food/menu');
+        const res = await getMenu();
         setMenuItems(res.data);
       } catch (err) {
         console.error('Failed to fetch menu:', err);
@@ -153,23 +176,20 @@ export function FoodPage() {
 
     // ── Frontend: enforce per-item quantity cap ──
     if (currentQty >= MAX_QTY_PER_ITEM) {
-      setErrorMessage(`Maximum ${MAX_QTY_PER_ITEM} of "${item.name}" per order.`);
-      setTimeout(() => setErrorMessage(''), 3000);
+      toast.error(`Maximum ${MAX_QTY_PER_ITEM} of "${item.name}" per order.`);
       return;
     }
     if (currentQty >= item.stockCount) {
-      setErrorMessage(`Only ${item.stockCount} left in stock for "${item.name}".`);
-      setTimeout(() => setErrorMessage(''), 3000);
+      toast.error(`Only ${item.stockCount} left in stock for "${item.name}".`);
       return;
     }
 
     try {
-      const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
-      await axios.post('http://localhost:5002/api/food/lock', {
+      await addCartLock({
         ticketId: localStorage.getItem('eventTicketId'),
         menuItemId: item._id,
         quantity: 1
-      }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      });
       
       setCart((prev) => {
         const ex = prev.find((i) => i._id === item._id);
@@ -178,17 +198,17 @@ export function FoodPage() {
         }
         return [...prev, { ...item, quantity: 1 }];
       });
+      toast.success(`Added ${item.name}`);
     } catch (err) {
-      alert(err.response?.data?.msg || 'Could not reserve item due to stock limits!');
+      toast.error(err.response?.data?.msg || 'Could not reserve item due to stock limits!');
     }
   };
 
   const removeFromCart = async (itemId) => {
     try {
-      const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
-      await axios.delete('http://localhost:5002/api/food/lock', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        data: { ticketId: localStorage.getItem('eventTicketId'), menuItemId: itemId }
+      await removeCartLock({
+        ticketId: localStorage.getItem('eventTicketId'),
+        menuItemId: itemId
       });
       setCart((prev) => prev.filter((i) => i._id !== itemId));
     } catch (err) {
@@ -219,38 +239,39 @@ export function FoodPage() {
   const handleCheckout = async () => {
     // ── Frontend guards ──────────────────────────────────────────────────────
     if (cart.length === 0) {
-      setErrorMessage('Your cart is empty. Add at least one item before checking out.');
+      toast.error('Your cart is empty. Add at least one item before checking out.');
       return;
     }
     if (!pickupSlot) {
-      setErrorMessage('Please select a pickup time slot before placing your order.');
+      toast.error('Please select a pickup time slot before placing your order.');
       return;
     }
     if (total < MIN_ORDER_AMOUNT) {
-      setErrorMessage(`Minimum order amount is Rs. ${MIN_ORDER_AMOUNT}. Current total: Rs. ${total.toFixed(2)}.`);
+      toast.error(`Minimum order amount is Rs. ${MIN_ORDER_AMOUNT}. Current total: Rs. ${total.toFixed(2)}.`);
       return;
     }
 
+    if (paymentMethod === 'Card') {
+      setIsModalOpen(true);
+      return;
+    }
+
+    // Cash on Pickup Flow
     setOrderStatus('loading');
-    setErrorMessage('');
     
     try {
       const ticketId = localStorage.getItem('eventTicketId');
-      const token = localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null;
       
-      const res = await axios.post(
-        'http://localhost:5002/api/food',
-        {
-          ticketId,
-          items: cart.map(i => ({ menuItem: i._id, name: i.name, quantity: i.quantity, price: i.price, stallNumber: i.stallNumber })),
-          totalAmount: total,
-          pickupSlot,
-          event: localStorage.getItem('eventId') || undefined
-        },
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-      );
+      const res = await createFoodOrder({
+        ticketId,
+        items: cart.map(i => ({ menuItem: i._id, name: i.name, quantity: i.quantity, price: i.price, stallNumber: i.stallNumber })),
+        totalAmount: total,
+        pickupSlot,
+        paymentMethod,
+        event: localStorage.getItem('eventId') || undefined
+      });
       
-      setQrString(res.data.qrString);
+      setQrString(res.data.order ? res.data.order.qrString : res.data.qrString);
       setOrderedItems(cart);
       setRewardEligible(total > 2000);
       setEcoVoucher(avgEcoScore === 100);
@@ -266,13 +287,47 @@ export function FoodPage() {
       const status = err.response?.status;
       const serverMsg = err.response?.data?.msg || 'Failed to place order.';
       if (status === 409) {
-        setErrorMessage('⚠️ ' + serverMsg); // duplicate ticket
+        toast.error('⚠️ ' + serverMsg);
       } else if (status === 400) {
-        setErrorMessage('❌ ' + serverMsg);
+        toast.error('❌ ' + serverMsg);
       } else {
-        setErrorMessage('Server error. Please try again.');
+        toast.error('Server error. Please try again.');
       }
       setOrderStatus('error');
+    }
+  };
+
+  const handlePaymentConfirmed = async () => {
+    try {
+      const ticketId = localStorage.getItem('eventTicketId');
+      const res = await createFoodOrder({
+        ticketId,
+        items: cart.map(i => ({ menuItem: i._id, name: i.name, quantity: i.quantity, price: i.price, stallNumber: i.stallNumber })),
+        totalAmount: total,
+        pickupSlot,
+        paymentMethod,
+        event: localStorage.getItem('eventId') || undefined
+      });
+      
+      // Wait for PaymentModal's 2 second success animation before revealing the QR code
+      setTimeout(() => {
+        setQrString(res.data.qrString);
+        setOrderedItems(cart);
+        setRewardEligible(total > 2000);
+        setEcoVoucher(avgEcoScore === 100);
+        if (discountUsed) {
+          setActiveVouchers(prev => prev.filter(v => v !== '5_EVENT_SNACK_REWARD'));
+        }
+        setOrderStatus('success');
+        setCart([]);
+        setIsModalOpen(false);
+      }, 2000);
+      
+      return res.data;
+    } catch (err) {
+      const serverMsg = err.response?.data?.msg || 'Failed to place order.';
+      toast.error(serverMsg);
+      throw err;
     }
   };
 
@@ -489,10 +544,17 @@ export function FoodPage() {
                     <option value="1:30 PM">1:30 PM</option>
                   </select>
                 </div>
-                
-                {errorMessage && (
-                  <p className="text-red-500 text-sm mb-4 font-bold bg-red-50 p-2 rounded-md border border-red-100">{errorMessage}</p>
-                )}
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Select Payment Method</label>
+                  <select 
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                  >
+                    <option value="Card">Pay by Card (Online)</option>
+                    <option value="Cash">Cash on Pickup</option>
+                  </select>
+                </div>
                 
                 <button
                   onClick={handleCheckout}
@@ -516,6 +578,17 @@ export function FoodPage() {
           </div>
         </div>
       </main>
+
+      <PaymentModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handlePaymentConfirmed}
+        reservationData={{
+          slotNumber: 'Food Order',
+          zone: 'Food Court'
+        }}
+        amount={total}
+      />
     </div>
   );
 }

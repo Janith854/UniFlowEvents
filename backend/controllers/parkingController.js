@@ -159,14 +159,18 @@ exports.confirmPayment = async (req, res) => {
     }
 };
 
-// Get Parking Analytics for Organizers
+// Get Parking Analytics for Organizers — scoped to their own events
 exports.getParkingAnalytics = async (req, res) => {
     try {
+        // Find events created by this organizer
+        const organizerEvents = await Event.find({ organizer: req.user.id }).select('_id');
+        const eventIds = organizerEvents.map((e) => e._id);
+
         const stats = await ParkingReservation.aggregate([
-            { $match: { paymentStatus: 'Paid' } },
+            { $match: { paymentStatus: 'Paid', event: { $in: eventIds } } },
             { $group: { _id: '$zone', count: { $sum: 1 } } }
         ]);
-        
+
         const north = stats.find(s => s._id === 'North')?.count || 0;
         const south = stats.find(s => s._id === 'South')?.count || 0;
 
