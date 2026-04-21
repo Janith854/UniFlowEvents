@@ -1,0 +1,25 @@
+const mongoose = require('mongoose');
+
+const eventSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    date: { type: Date, required: true },
+    location: { type: String, required: true }, // Venue
+    organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    // Phase 1 Additions
+    category: { type: String, enum: ['Academic', 'Social', 'Sports', 'Workshop', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'], default: 'Other' },
+    capacity: { type: Number, required: true },
+    ticketing: {
+        regularPrice: { type: Number, default: 0 },
+        vipPrice: { type: Number, default: 0 }
+    },
+    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    image: { type: String }, // Path or URL to uploaded image
+    registrationDeadline: { type: Date, required: true },
+    // Phase 2 Additions
+    status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
+    
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Event', eventSchema);

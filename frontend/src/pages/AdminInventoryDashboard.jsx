@@ -1,0 +1,203 @@
+import React, { useState, useEffect } from 'react';
+import { Navbar } from '../components/Navbar';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+
+export function AdminInventoryDashboard() {
+  const { token } = useAuth();
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [newItem, setNewItem] = useState({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1', image: '' });
+
+  useEffect(() => {
+    fetchMenu();
+  }, []);
+
+  const fetchMenu = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('http://localhost:5002/api/food/menu');
+      setMenuItems(res.data);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to fetch menu items.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAuthHeader = () => {
+    const authToken = token || (localStorage.getItem('uniflow_auth') ? JSON.parse(localStorage.getItem('uniflow_auth')).token : null);
+    return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to completely delete this item from the active database?')) return;
+    try {
+      await axios.delete(`http://localhost:5002/api/food/menu/${id}`, { headers: getAuthHeader() });
+      setMenuItems(menuItems.filter(item => item._id !== id));
+    } catch (err) {
+      alert('Failed to delete item.');
+    }
+  };
+
+  const handleUpdateItem = async (id, field, value) => {
+    try {
+      const payload = { [field]: field === 'price' || field === 'stockCount' ? Number(value) : value };
+      const res = await axios.put(`http://localhost:5002/api/food/menu/${id}`, payload, { headers: getAuthHeader() });
+      setMenuItems(menuItems.map(item => item._id === id ? res.data : item));
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to update ${field} globally.`);
+    }
+  };
+
+  const handleAddItem = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { ...newItem, price: Number(newItem.price), stockCount: Number(newItem.stockCount), ecoScore: Number(newItem.ecoScore) };
+      const res = await axios.post('http://localhost:5002/api/food/menu', payload, { headers: getAuthHeader() });
+      setMenuItems([...menuItems, res.data]);
+      setShowModal(false);
+      setNewItem({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1', image: '' });
+    } catch (err) {
+      alert('Failed to physically insert new Menu Item.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Navbar />
+      <main className="pt-24 px-4 w-full max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <h1 className="text-3xl font-black text-gray-900">Inventory Management</h1>
+          <button onClick={() => setShowModal(true)} className="bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-3 rounded-xl font-bold shadow-sm transition-colors">
+            + Add New Menu Item
+          </button>
+        </div>
+
+        {error && <p className="text-red-500 bg-red-50 p-4 rounded-xl mb-4 font-bold border border-red-100">{error}</p>}
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200 text-gray-700">
+                  <th className="p-4 font-bold">Item Name</th>
+                  <th className="p-4 font-bold">Category</th>
+                  <th className="p-4 font-bold">Stall</th>
+                  <th className="p-4 font-bold">Price</th>
+                  <th className="p-4 font-bold text-center">Active Stock</th>
+                  <th className="p-4 font-bold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="6" className="p-4 text-center text-gray-500">Loading inventory sequence...</td></tr>
+                ) : menuItems.length === 0 ? (
+                  <tr><td colSpan="6" className="p-4 text-center text-gray-500">No active menu items found sequentially.</td></tr>
+                ) : (
+                  menuItems.map((item) => (
+                    <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+                      <td className="p-4 font-bold text-gray-900">{item.name}</td>
+                      <td className="p-4 text-gray-600">{item.category}</td>
+                      <td className="p-4">
+                        <span className="text-xs uppercase font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded">{item.stallNumber || 'General'}</span>
+                      </td>
+                      <td className="p-4 font-medium text-gray-700">
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400 text-sm">Rs.</span>
+                          <input 
+                            type="number" 
+                            className="w-24 border border-gray-300 rounded px-2 py-1 text-center font-bold focus:ring-2 focus:ring-amber-400 outline-none"
+                            value={item.price}
+                            onChange={(e) => handleUpdateItem(item._id, 'price', e.target.value)}
+                          />
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <input 
+                          type="number" 
+                          className="w-20 border border-gray-300 rounded px-2 py-1 text-center font-bold focus:ring-2 focus:ring-amber-400 outline-none"
+                          value={item.stockCount}
+                          onChange={(e) => handleUpdateItem(item._id, 'stockCount', e.target.value)}
+                        />
+                      </td>
+                      <td className="p-4 text-center">
+                        <button onClick={() => handleDelete(item._id)} className="bg-amber-400 text-zinc-950 hover:bg-amber-300 px-3 py-1 rounded font-bold text-sm transition-all border border-amber-500/20 active:scale-95">
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      {/* Floating Add Item Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white max-w-lg w-full rounded-2xl p-8 shadow-xl">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Menu Item</h2>
+            <form onSubmit={handleAddItem} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Item Name</label>
+                <input required type="text" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. Spicy Noodles" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Category</label>
+                  <select value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                    <option>Meals</option>
+                    <option>Snacks</option>
+                    <option>Beverages</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Stall Assignment</label>
+                  <select value={newItem.stallNumber} onChange={e => setNewItem({...newItem, stallNumber: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                    <option>Stall 1 (Hot Meals)</option>
+                    <option>Stall 2 (Quick Bites)</option>
+                    <option>Stall 3 (Desserts & Sweets)</option>
+                    <option>Stall 4 (Beverages Bar)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Price (Rs.)</label>
+                  <input required type="number" min="0" value={newItem.price} onChange={e => setNewItem({...newItem, price: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Initial Stock</label>
+                  <input required type="number" min="0" value={newItem.stockCount} onChange={e => setNewItem({...newItem, stockCount: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Eco-Score</label>
+                  <input required type="number" min="0" max="100" value={newItem.ecoScore} onChange={e => setNewItem({...newItem, ecoScore: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Image URL path (Optional)</label>
+                <input type="text" value={newItem.image} onChange={e => setNewItem({...newItem, image: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" placeholder="/images/default.png" />
+              </div>
+              <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 text-gray-500 font-bold hover:text-zinc-950 transition-colors">Cancel</button>
+                <button type="submit" className="bg-amber-400 hover:bg-amber-300 text-zinc-950 px-6 py-2 rounded-lg font-black shadow-lg shadow-amber-400/20 transition-all active:scale-95">Inject Schema</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default AdminInventoryDashboard;
