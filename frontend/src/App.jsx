@@ -109,6 +109,14 @@ export function App() {
           }
         />
         <Route
+          path="/food"
+          element={
+            <ProtectedRoute>
+              <FoodPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/parking"
           element={
             <ProtectedRoute>
