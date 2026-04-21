@@ -8,6 +8,11 @@ export function AdminInventoryDashboard() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Filtering State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All Categories');
+  const [stallFilter, setStallFilter] = useState('All Stalls');
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -80,6 +85,43 @@ export function AdminInventoryDashboard() {
           </button>
         </div>
 
+        {/* Search and Filters Bar */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1 relative">
+            <input 
+              type="text" 
+              placeholder="Search items by name..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 pl-10 font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm transition-all"
+            />
+            <div className="absolute left-3 top-3.5 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+          </div>
+          <select 
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm transition-all cursor-pointer"
+          >
+            <option>All Categories</option>
+            <option>Meals</option>
+            <option>Snacks</option>
+            <option>Beverages</option>
+          </select>
+          <select 
+            value={stallFilter}
+            onChange={(e) => setStallFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm transition-all cursor-pointer"
+          >
+            <option>All Stalls</option>
+            <option>Stall 1</option>
+            <option>Stall 2</option>
+            <option>Stall 3</option>
+            <option>Stall 4</option>
+          </select>
+        </div>
+
         {error && <p className="text-red-500 bg-red-50 p-4 rounded-xl mb-4 font-bold border border-red-100">{error}</p>}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -87,9 +129,11 @@ export function AdminInventoryDashboard() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-gray-700">
+                  <th className="p-4 font-bold">Image</th>
                   <th className="p-4 font-bold">Item Name</th>
                   <th className="p-4 font-bold">Category</th>
                   <th className="p-4 font-bold">Stall</th>
+                  <th className="p-4 font-bold text-center">Eco-Score</th>
                   <th className="p-4 font-bold">Price</th>
                   <th className="p-4 font-bold text-center">Active Stock</th>
                   <th className="p-4 font-bold text-center">Actions</th>
@@ -101,13 +145,43 @@ export function AdminInventoryDashboard() {
                 ) : menuItems.length === 0 ? (
                   <tr><td colSpan="6" className="p-4 text-center text-gray-500">No active menu items found sequentially.</td></tr>
                 ) : (
-                  menuItems.map((item) => (
-                    <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
-                      <td className="p-4 font-bold text-gray-900">{item.name}</td>
-                      <td className="p-4 text-gray-600">{item.category}</td>
-                      <td className="p-4">
-                        <span className="text-xs uppercase font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded">{item.stallNumber || 'General'}</span>
-                      </td>
+                  menuItems
+                    .filter(item => {
+                      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+                      const matchesCategory = categoryFilter === 'All Categories' || item.category === categoryFilter;
+                      const matchesStall = stallFilter === 'All Stalls' || (item.stallNumber && item.stallNumber.includes(stallFilter));
+                      return matchesSearch && matchesCategory && matchesStall;
+                    })
+                    .map((item) => (
+                      <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+                        <td className="p-4">
+                          {item.image ? (
+                            <img 
+                              src={item.image.startsWith('http') ? item.image : `http://localhost:5002${item.image}`} 
+                              alt={item.name} 
+                              className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm"
+                              onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=No+Image'; }}
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4 font-bold text-gray-900">{item.name}</td>
+                        <td className="p-4 text-gray-600">{item.category}</td>
+                        <td className="p-4">
+                          <span className="text-xs uppercase font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded whitespace-nowrap">{item.stallNumber || 'General'}</span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-black ${
+                            item.ecoScore >= 80 ? 'bg-green-100 text-green-700' :
+                            item.ecoScore >= 50 ? 'bg-amber-100 text-amber-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {item.ecoScore}/100
+                          </span>
+                        </td>
                       <td className="p-4 font-medium text-gray-700">
                         <div className="flex items-center gap-1">
                           <span className="text-gray-400 text-sm">Rs.</span>
@@ -120,12 +194,31 @@ export function AdminInventoryDashboard() {
                         </div>
                       </td>
                       <td className="p-4 text-center">
-                        <input 
-                          type="number" 
-                          className="w-20 border border-gray-300 rounded px-2 py-1 text-center font-bold focus:ring-2 focus:ring-amber-400 outline-none"
-                          value={item.stockCount}
-                          onChange={(e) => handleUpdateItem(item._id, 'stockCount', e.target.value)}
-                        />
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-1">
+                            <button 
+                              onClick={() => handleUpdateItem(item._id, 'stockCount', Math.max(0, item.stockCount - 1))}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 font-bold transition-colors"
+                            >
+                              -
+                            </button>
+                            <input 
+                              type="number" 
+                              className={`w-16 border ${item.stockCount <= 5 ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg px-2 py-1 text-center font-bold focus:ring-2 focus:ring-amber-400 outline-none transition-colors`}
+                              value={item.stockCount}
+                              onChange={(e) => handleUpdateItem(item._id, 'stockCount', e.target.value)}
+                            />
+                            <button 
+                              onClick={() => handleUpdateItem(item._id, 'stockCount', Number(item.stockCount) + 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-amber-100 hover:bg-amber-200 rounded-lg text-amber-700 font-bold transition-colors"
+                            >
+                              +
+                            </button>
+                          </div>
+                          {item.stockCount <= 5 && (
+                            <span className="text-[10px] font-black text-red-600 mt-1 uppercase tracking-tighter">Low Stock!</span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 text-center">
                         <button onClick={() => handleDelete(item._id)} className="bg-amber-400 text-zinc-950 hover:bg-amber-300 px-3 py-1 rounded font-bold text-sm transition-all border border-amber-500/20 active:scale-95">
