@@ -13,7 +13,8 @@ const connectDB = async () => {
             
             const path = require('path');
             const fs = require('fs');
-            const dbPath = path.join('D:', 'uniflow_temp_db');
+            const os = require('os');
+            const dbPath = path.join(os.tmpdir(), 'uniflow_temp_db');
             if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath, { recursive: true });
 
             const mongoServer = await MongoMemoryServer.create({
