@@ -349,7 +349,7 @@ export function AdminInventoryDashboard() {
               </div>
               <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 text-gray-500 font-bold hover:text-zinc-950 transition-colors">Cancel</button>
-                <button type="submit" className="bg-amber-400 hover:bg-amber-300 text-zinc-950 px-6 py-2 rounded-lg font-black shadow-lg shadow-amber-400/20 transition-all active:scale-95">Inject Schema</button>
+                <button type="submit" className="bg-amber-400 hover:bg-amber-300 text-zinc-950 px-6 py-2 rounded-lg font-black shadow-lg shadow-amber-400/20 transition-all active:scale-95">Add to Menu</button>
               </div>
             </form>
           </div>
