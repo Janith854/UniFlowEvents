@@ -1,16 +1,5 @@
 const User = require('../models/User');
-
-const sanitizeUser = (user) => ({
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    isActive: user.isActive,
-    eventsAttended: user.eventsAttended,
-    activeVouchers: user.activeVouchers,
-    inbox: user.inbox || [],
-    createdAt: user.createdAt,
-});
+const { sanitizeUser } = require('../utils/sanitize');
 
 const canManageUser = (requestUser, targetUserId) => {
     return requestUser.role === 'organizer' || requestUser._id.toString() === targetUserId.toString();
@@ -199,10 +188,13 @@ exports.deactivateUser = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email });
-        
+        const user = await User.findOne({ email: email?.toLowerCase().trim() });
+
+        // Always return the same generic response to prevent user enumeration
+        const genericResponse = { msg: 'If that email is registered, a password reset link has been sent.' };
+
         if (!user) {
-            return res.status(404).json({ msg: 'User with this email does not exist' });
+            return res.json(genericResponse);
         }
 
         const resetToken = require('crypto').randomBytes(20).toString('hex');
@@ -214,7 +206,7 @@ exports.forgotPassword = async (req, res) => {
         const emailService = require('../services/emailService');
         const previewUrl = await emailService.sendPasswordResetEmail(user.email, resetToken);
 
-        res.json({ msg: 'Password reset link sent to email', previewUrl });
+        res.json({ ...genericResponse, previewUrl });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

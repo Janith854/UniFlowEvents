@@ -4,14 +4,14 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { TicketRoute } from './components/TicketRoute';
 import { GlobalSocketListener } from './components/GlobalSocketListener';
-import { Home } from './pages/Home';
 import { LoginPage } from './pages/Login';
-import { HomePage } from './pages/HomePage'; // Just in case, checking names
+import { HomePage } from './pages/HomePage';
 import { ProfilePage } from './pages/Profile';
 import { Dashboard } from './pages/Dashboard';
 import { Events } from './pages/Events';
 import { EventPage } from './pages/EventPage';
 import { FoodPage } from './pages/FoodPage';
+import { FoodSuccessPage } from './pages/FoodSuccessPage';
 import { AdminFoodDashboard } from './pages/AdminFoodDashboard';
 import { AdminInventoryDashboard } from './pages/AdminInventoryDashboard';
 import { ParkingPage } from './pages/ParkingPage';
@@ -35,7 +35,7 @@ export function App() {
     <AuthProvider>
       <GlobalSocketListener />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -65,8 +65,7 @@ export function App() {
           }
         />
         <Route path="/events" element={<Events />} />
-        <Route path="/events/:id" element={<EventPage />} />
-        <Route path="/calendar" element={<CalendarView />} />
+        {/* Static event routes MUST come before the dynamic /:id route */}
         <Route
           path="/events/create"
           element={
@@ -83,6 +82,8 @@ export function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/events/:id" element={<EventPage />} />
+        <Route path="/calendar" element={<CalendarView />} />
         <Route
           path="/analytics"
           element={
@@ -100,10 +101,10 @@ export function App() {
           }
         />
         <Route
-          path="/food"
+          path="/food/success"
           element={
             <TicketRoute>
-              <FoodPage />
+              <FoodSuccessPage />
             </TicketRoute>
           }
         />
@@ -115,7 +116,14 @@ export function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/parking/success" element={<DigitalPass />} />
+        <Route
+          path="/parking/success"
+          element={
+            <ProtectedRoute>
+              <DigitalPass />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin/food"
           element={

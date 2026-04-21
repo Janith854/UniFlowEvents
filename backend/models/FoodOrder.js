@@ -34,6 +34,9 @@ const foodOrderSchema = new mongoose.Schema({
         }
     },
     qrString: { type: String, required: true },
+    paymentMethod: { type: String, enum: ['Card', 'Cash'], required: true },
+    stripeSessionId: { type: String },
+    paymentStatus: { type: String, enum: ['Pending', 'Paid', 'Pay at Counter'], default: 'Pending' },
     status: { type: String, enum: ['Pending', 'Ready', 'Picked Up'], default: 'Pending' },
     createdAt: { type: Date, default: Date.now }
 });

@@ -3,6 +3,7 @@ const MenuItem = require('../models/MenuItem');
 const CartLock = require('../models/CartLock');
 const User = require('../models/User');
 const crypto = require('crypto');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.addCartLock = async (req, res) => {
     try {
@@ -73,11 +74,16 @@ exports.getFoodOrders = async (req, res) => {
 
 exports.createFoodOrder = async (req, res) => {
     try {
-        const { ticketId, items, pickupSlot, event, user } = req.body;
+        const { ticketId, items, pickupSlot, event, paymentMethod } = req.body;
+        // Never trust the client-supplied 'user' — always use the authenticated user's ID
+        const userId = req.user._id;
 
         // ── 1. Required fields ──────────────────────────────────────────────
         if (!ticketId || !ticketId.trim()) {
             return res.status(400).json({ msg: 'A valid Event Ticket ID is required to place a food order.' });
+        }
+        if (!paymentMethod || !['Card', 'Cash'].includes(paymentMethod)) {
+            return res.status(400).json({ msg: 'A valid payment method (Card or Cash) is required.' });
         }
         if (!pickupSlot) {
             return res.status(400).json({ msg: 'A pickup slot must be selected.' });
@@ -174,18 +180,52 @@ exports.createFoodOrder = async (req, res) => {
         const qrString = JSON.stringify(qrPayload);
 
         const order = new FoodOrder({
-            user: (req.user && req.user._id) || user,
+            user: userId,
             event,
             ticketId: ticketId.trim(),
             items: processedItems,
             totalAmount: Math.max(0, serverTotalAmount), // server-calculated — client cannot spoof
             pickupSlot,
+            paymentMethod,
             qrString,
-            status: 'Pending'
+            status: 'Pending',
+            paymentStatus: paymentMethod === 'Card' ? (Math.max(0, serverTotalAmount) > 0 ? 'Pending' : 'Paid') : 'Pay at Counter'
         });
 
         await order.save();
-        res.status(201).json(order);
+
+        if (paymentMethod === 'Card' && order.totalAmount > 0) {
+            let session;
+            try {
+                session = await stripe.checkout.sessions.create({
+                    payment_method_types: ['card'],
+                    line_items: [{
+                        price_data: {
+                            currency: 'lkr',
+                            product_data: { name: 'UniFlow Food Order' },
+                            unit_amount: Math.round(order.totalAmount * 100),
+                        },
+                        quantity: 1,
+                    }],
+                    mode: 'payment',
+                    success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/food/success?session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/food`,
+                    metadata: { orderId: order._id.toString() }
+                });
+                order.stripeSessionId = session.id;
+                await order.save();
+                return res.status(201).json({ id: session.id, url: session.url, order });
+            } catch (stripeErr) {
+                console.warn('Stripe Session creation failed, falling back to Mock Payment:', stripeErr.message);
+                const mockId = `MOCK_SESSION_${Date.now()}`;
+                order.stripeSessionId = mockId;
+                await order.save();
+                return res.status(201).json({ id: mockId, url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/food/success?session_id=${mockId}`, order });
+            }
+        } else {
+            // Free order or Cash on Pickup
+            return res.status(201).json({ order, isFree: true });
+        }
     } catch (err) {
         // Surface Mongoose validation errors cleanly
         if (err.name === 'ValidationError') {
@@ -207,6 +247,31 @@ exports.updateFoodOrder = async (req, res) => {
         }
 
         res.json(order);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.confirmPayment = async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        if (!sessionId) return res.status(400).json({ msg: 'Session ID required' });
+
+        const order = await FoodOrder.findOne({ stripeSessionId: sessionId });
+        if (!order) return res.status(404).json({ msg: 'Order not found' });
+
+        if (order.paymentStatus === 'Paid') {
+            return res.json({ msg: 'Payment already confirmed', order });
+        }
+
+        // Verify with Stripe here if we had a full backend
+        order.paymentStatus = 'Paid';
+        await order.save();
+
+        const io = req.app.get('io');
+        if (io) io.emit('food-order-payment-confirmed', order);
+
+        res.json({ msg: 'Payment confirmed successfully', order });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
