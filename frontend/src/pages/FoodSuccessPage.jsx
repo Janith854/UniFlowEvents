@@ -148,7 +148,7 @@ export function FoodSuccessPage() {
                         <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-black">!</div>
                         <h2 className="text-2xl font-black text-zinc-950 mb-2">Verification Failed</h2>
                         <p className="text-gray-500 mb-8">{error}</p>
-                        <Link to="/food" className="bg-zinc-950 text-white font-black py-4 px-8 rounded-2xl hover:bg-zinc-900 transition-all inline-block">Return to Food Menu</Link>
+                        <Link to="/food" className="bg-zinc-950 text-white font-black py-4 px-8 rounded-2xl hover:bg-zinc-900 transition-all inline-block">Return to  Menu</Link>
                     </div>
                 </main>
             </div>
