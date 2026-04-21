@@ -22,6 +22,23 @@ export function AdminInventoryDashboard() {
     fetchMenu();
   }, []);
 
+  const availableImages = [
+    { name: 'Vegan Burger', path: '/images/vegan_burger.png' },
+    { name: 'Margherita Pizza', path: '/images/margherita_pizza.png' },
+    { name: 'Sushi Platter', path: '/images/sushi_platter.png' },
+    { name: 'Premium Steak', path: '/images/premium_steak.png' },
+    { name: 'Caesar Salad', path: '/images/caesar_salad.png' },
+    { name: 'Truffle Fries', path: '/images/truffle_fries.png' },
+    { name: 'Loaded Nachos', path: '/images/loaded_nachos.png' },
+    { name: 'Caramel Popcorn', path: '/images/caramel_popcorn.png' },
+    { name: 'Soft Pretzel', path: '/images/soft_pretzel.png' },
+    { name: 'Artisan Coffee', path: '/images/artisan_coffee.png' },
+    { name: 'Berry Smoothie', path: '/images/berry_smoothie.png' },
+    { name: 'Classic Cola', path: '/images/classic_cola.png' },
+    { name: 'Fresh Lemonade', path: '/images/fresh_lemonade.png' },
+    { name: 'Iced Lemon Tea', path: '/images/iced_lemon_tea.png' }
+  ];
+
   const fetchMenu = async () => {
     try {
       setLoading(true);
@@ -58,6 +75,31 @@ export function AdminInventoryDashboard() {
     } catch (err) {
       console.error(err);
       alert(`Failed to update ${field} globally.`);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      setLoading(true);
+      const res = await axios.post('http://localhost:5002/api/food/upload', formData, {
+        headers: {
+          ...getAuthHeader(),
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setNewItem({ ...newItem, image: res.data.path });
+      toast.success('Image uploaded successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload image.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -157,7 +199,7 @@ export function AdminInventoryDashboard() {
                         <td className="p-4">
                           {item.image ? (
                             <img 
-                              src={item.image} 
+                              src={item.image.startsWith('/uploads') ? `http://localhost:5002${item.image}` : item.image} 
                               alt={item.name} 
                               className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm bg-gray-50"
                               onError={(e) => { 
@@ -281,8 +323,29 @@ export function AdminInventoryDashboard() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Image URL path (Optional)</label>
-                <input type="text" value={newItem.image} onChange={e => setNewItem({...newItem, image: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500" placeholder="/images/default.png" />
+                <label className="block text-sm font-bold text-gray-700 mb-2">Item Photo</label>
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-amber-50 hover:border-amber-400 transition-all group">
+                  {newItem.image ? (
+                    <div className="flex items-center gap-4 w-full px-4">
+                      <img
+                        src={newItem.image.startsWith('/uploads') ? `http://localhost:5002${newItem.image}` : newItem.image}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-xl object-cover border-2 border-amber-300 shadow-md"
+                      />
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">{newItem.image.split('/').pop()}</p>
+                        <p className="text-xs text-amber-600 font-semibold mt-1">Click to change photo</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-gray-400 group-hover:text-amber-500 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      <p className="text-sm font-bold mt-2">Click to upload a photo</p>
+                      <p className="text-xs mt-1">PNG, JPG, WEBP supported</p>
+                    </div>
+                  )}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                </label>
               </div>
               <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 text-gray-500 font-bold hover:text-zinc-950 transition-colors">Cancel</button>

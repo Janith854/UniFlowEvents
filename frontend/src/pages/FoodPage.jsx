@@ -436,7 +436,11 @@ export function FoodPage() {
                 <div className="mb-4">
                   {item.image && (
                     <div className="h-48 -mx-4 -mt-4 mb-4 overflow-hidden bg-gray-100 rounded-t-2xl">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                      <img 
+                        src={item.image.startsWith('/uploads') ? `http://localhost:5002${item.image}` : item.image} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                      />
                     </div>
                   )}
                   <h3 className="font-bold text-xl text-gray-900">{item.name}</h3>

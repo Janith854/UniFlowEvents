@@ -214,7 +214,7 @@ export function AdminFoodDashboard() {
                               <li key={idx} className="flex flex-col gap-1 mb-2">
                                 {i.image && (
                                   <img
-                                    src={i.image}
+                                    src={i.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002'}${i.image}` : i.image}
                                     alt={i.name}
                                     className="w-12 h-12 rounded-lg object-cover border border-gray-100"
                                     onError={(e) => { 
