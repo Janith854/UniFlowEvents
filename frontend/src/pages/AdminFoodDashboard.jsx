@@ -21,13 +21,15 @@ export function AdminFoodDashboard() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('All Time');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [stallFilter, setStallFilter] = useState('All Stalls');
   const [globalStats, setGlobalStats] = useState({ totalSales: 0, statusMap: {}, stallDataMap: {} });
 
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, stallFilter, dateFilter]);
+  }, [searchQuery, stallFilter, dateFilter, customStartDate, customEndDate]);
 
   // Fetch with Debounce
   useEffect(() => {
@@ -35,12 +37,20 @@ export function AdminFoodDashboard() {
       fetchOrders();
     }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, stallFilter, dateFilter, page]);
+  }, [searchQuery, stallFilter, dateFilter, customStartDate, customEndDate, page]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const params = { page, limit, dateFilter, search: searchQuery, stall: stallFilter };
+      const params = { 
+        page, 
+        limit, 
+        dateFilter, 
+        startDate: dateFilter === 'Custom' ? customStartDate : undefined,
+        endDate: dateFilter === 'Custom' ? customEndDate : undefined,
+        search: searchQuery, 
+        stall: stallFilter 
+      };
       const res = await getFoodOrders(params);
       setOrders(res.data.orders || []);
       setTotalPages(res.data.totalPages || 1);
@@ -102,7 +112,14 @@ export function AdminFoodDashboard() {
 
   const fetchFullReportData = async () => {
     try {
-       const res = await getFoodOrders({ dateFilter, search: searchQuery, stall: stallFilter, report: true });
+       const res = await getFoodOrders({ 
+         dateFilter, 
+         startDate: dateFilter === 'Custom' ? customStartDate : undefined,
+         endDate: dateFilter === 'Custom' ? customEndDate : undefined,
+         search: searchQuery, 
+         stall: stallFilter, 
+         report: true 
+       });
        return res.data;
     } catch (e) { 
        toast.error("Failed to fetch full data for report.");
@@ -359,7 +376,25 @@ export function AdminFoodDashboard() {
                 <option value="Today">Today</option>
                 <option value="Yesterday">Yesterday</option>
                 <option value="Last 7 Days">Last 7 Days</option>
+                <option value="Custom">Custom Range</option>
               </select>
+              {dateFilter === 'Custom' && (
+                <div className="flex gap-2 items-center">
+                  <input 
+                    type="date" 
+                    value={customStartDate} 
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                  />
+                  <span className="text-gray-400 font-bold">to</span>
+                  <input 
+                    type="date" 
+                    value={customEndDate} 
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                  />
+                </div>
+              )}
               <select 
                 value={stallFilter}
                 onChange={(e) => setStallFilter(e.target.value)}

@@ -65,28 +65,35 @@ exports.getMenu = async (req, res) => {
 
 exports.getFoodOrders = async (req, res) => {
     try {
-        const { page = 1, limit = 50, dateFilter, search, stall, report } = req.query;
+        const { page = 1, limit = 50, dateFilter, startDate, endDate, search, stall, report } = req.query;
         let query = {};
 
         // Date Filtering
         if (dateFilter && dateFilter !== 'All Time') {
             const now = new Date();
-            let startDate = new Date();
+            let start = new Date();
             if (dateFilter === 'Today') {
-                startDate.setHours(0, 0, 0, 0);
+                start.setHours(0, 0, 0, 0);
+                query.createdAt = { $gte: start };
             } else if (dateFilter === 'Yesterday') {
-                startDate.setDate(now.getDate() - 1);
-                startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(startDate);
-                endDate.setHours(23, 59, 59, 999);
-                query.createdAt = { $gte: startDate, $lte: endDate };
+                start.setDate(now.getDate() - 1);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(start);
+                end.setHours(23, 59, 59, 999);
+                query.createdAt = { $gte: start, $lte: end };
             } else if (dateFilter === 'Last 7 Days') {
-                startDate.setDate(now.getDate() - 7);
-                startDate.setHours(0, 0, 0, 0);
-            }
-            
-            if (dateFilter !== 'Yesterday') {
-                query.createdAt = { $gte: startDate };
+                start.setDate(now.getDate() - 7);
+                start.setHours(0, 0, 0, 0);
+                query.createdAt = { $gte: start };
+            } else if (dateFilter === 'Custom' && startDate) {
+                const sDate = new Date(startDate);
+                sDate.setHours(0, 0, 0, 0);
+                query.createdAt = { $gte: sDate };
+                if (endDate) {
+                    const eDate = new Date(endDate);
+                    eDate.setHours(23, 59, 59, 999);
+                    query.createdAt.$lte = eDate;
+                }
             }
         }
 
