@@ -161,13 +161,20 @@ export function OrganizerFeedbackDashboard() {
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Satisfaction</span>
               </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-4xl font-black text-zinc-950">{stats.positivePercentage}%</h3>
-                  <span className="text-green-500 font-bold text-xs uppercase tracking-tighter">Positive</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-baseline gap-1">
+                    <h3 className="text-3xl font-black text-zinc-950">{stats.positivePercentage}%</h3>
+                    <span className="text-green-500 font-bold text-[10px] uppercase tracking-tighter">Positive</span>
+                  </div>
+                  <div className="flex items-baseline gap-1 text-right">
+                    <h3 className="text-xl font-black text-zinc-950/40">{stats.negativePercentage}%</h3>
+                    <span className="text-red-400 font-bold text-[10px] uppercase tracking-tighter">Negative</span>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden flex">
                   <div className="bg-green-500 h-full transition-all duration-1000" style={{ width: `${stats.positivePercentage}%` }}></div>
+                  <div className="bg-red-400 h-full transition-all duration-1000" style={{ width: `${stats.negativePercentage}%` }}></div>
                 </div>
               </div>
             </div>
