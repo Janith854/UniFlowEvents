@@ -71,45 +71,55 @@ export function OrganizerFeedbackDashboard() {
       <Navbar />
       <main className="pt-24 px-4 pb-16">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
-            <div>
-              <h1 className="text-4xl font-black text-zinc-950 tracking-tighter flex items-center gap-3">
-                <MessageSquare className="text-amber-400" size={40} />
-                Feedback Dashboard
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100/50 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-200/50">
+                <Smile size={12} />
+                Live Analytics
+              </div>
+              <h1 className="text-5xl md:text-6xl font-black text-zinc-950 tracking-[ -0.05em] leading-none">
+                Feedback <br className="hidden md:block" /> 
+                <span className="text-amber-400">Dashboard.</span>
               </h1>
-              <p className="text-gray-500 font-medium">Manage student experiences and AI-driven insights</p>
+              <p className="text-lg text-gray-500 font-medium max-w-md">Real-time student experiences processed with AI-driven sentiment analysis.</p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-                <Filter size={16} className="text-gray-400" />
-                <select 
-                  className="bg-transparent text-sm font-bold text-zinc-950 outline-none cursor-pointer"
-                  value={filters.rating}
-                  onChange={(e) => setFilters({...filters, rating: e.target.value})}
-                >
-                  <option value="All">All Ratings</option>
-                  {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} Stars</option>)}
-                </select>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="group bg-white pl-6 pr-4 py-4 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
+                <Filter size={18} className="text-gray-400 group-hover:text-amber-400 transition-colors" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Filter Rating</span>
+                  <select 
+                    className="bg-transparent text-sm font-black text-zinc-950 outline-none cursor-pointer"
+                    value={filters.rating}
+                    onChange={(e) => setFilters({...filters, rating: e.target.value})}
+                  >
+                    <option value="All">All Experiences</option>
+                    {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} Star Reviews</option>)}
+                  </select>
+                </div>
               </div>
 
-              <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-                <Filter size={16} className="text-gray-400" />
-                <select 
-                  className="bg-transparent text-sm font-bold text-zinc-950 outline-none cursor-pointer"
-                  value={filters.sentiment}
-                  onChange={(e) => setFilters({...filters, sentiment: e.target.value})}
-                >
-                  <option value="All">All Sentiments</option>
-                  <option value="Positive">Positive</option>
-                  <option value="Neutral">Neutral</option>
-                  <option value="Negative">Negative</option>
-                </select>
+              <div className="group bg-white pl-6 pr-4 py-4 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
+                <Filter size={18} className="text-gray-400 group-hover:text-amber-400 transition-colors" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Filter Sentiment</span>
+                  <select 
+                    className="bg-transparent text-sm font-black text-zinc-950 outline-none cursor-pointer"
+                    value={filters.sentiment}
+                    onChange={(e) => setFilters({...filters, sentiment: e.target.value})}
+                  >
+                    <option value="All">All Moods</option>
+                    <option value="Positive">Happy Vibes</option>
+                    <option value="Neutral">Neutral Ground</option>
+                    <option value="Negative">Needs Attention</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          <FeedbackStats stats={stats} />
+          <FeedbackStats stats={stats} isLoading={isLoading} />
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20">

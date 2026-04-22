@@ -1,7 +1,17 @@
 import React from 'react';
 import { Star, MessageSquare, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 
-export function FeedbackStats({ stats }) {
+export function FeedbackStats({ stats, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-48 bg-white/50 backdrop-blur-xl rounded-[40px] border border-white animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
   if (!stats) return null;
 
   const { averageRating, totalFeedback, satisfaction, commonComplaints } = stats;
