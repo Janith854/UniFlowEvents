@@ -7,7 +7,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getEvents } from '../services/eventService';
 import {
   Clock, MapPin, Users, X, CalendarDays, ChevronLeft, ChevronRight,
-  Tag, Search, LayoutGrid, List, Info, ExternalLink
+  Tag, Search, LayoutGrid, List, Info, ExternalLink, Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -145,7 +145,7 @@ export function CalendarView() {
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-400 shadow-md shadow-amber-200">
-                <CalendarDays className="h-6 w-6 text-white" />
+                <Sparkles className="h-6 w-6 text-zinc-950" />
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-3">
