@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getFoodOrders, updateFoodOrder } from '../services/foodService';
 import toast from 'react-hot-toast';
-import { Download } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import io from 'socket.io-client';
@@ -116,9 +116,9 @@ export function AdminFoodDashboard() {
   });
   const statusData = Object.keys(statusMap).map(key => ({ name: key, count: statusMap[key] }));
 
-  const generateReport = async () => {
+  const generateCSVReport = async () => {
     try {
-      const loadingToast = toast.loading('Generating report...');
+      const loadingToast = toast.loading('Generating CSV report...');
       
       // 1. Generate CSV Data
       let csvContent = "data:text/csv;charset=utf-8,";
@@ -167,10 +167,68 @@ export function AdminFoodDashboard() {
       document.body.removeChild(link);
       
       toast.dismiss(loadingToast);
-      toast.success('Report downloaded successfully!');
+      toast.success('CSV Report downloaded successfully!');
     } catch (err) {
-      console.error('Failed to generate report:', err);
-      toast.error('Failed to generate report.');
+      console.error('Failed to generate CSV report:', err);
+      toast.error('Failed to generate CSV report.');
+    }
+  };
+
+  const generatePDFReport = () => {
+    try {
+      const loadingToast = toast.loading('Generating PDF report...');
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text("UniFlow - Admin Food Dashboard Report", 14, 20);
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Generated At: ${new Date().toLocaleString()}`, 14, 30);
+      doc.text(`Total Sales: Rs. ${totalSales.toFixed(2)}`, 14, 38);
+      doc.text(`Total Orders: ${filteredOrders.length}`, 14, 46);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text("Stall Revenue Summary:", 14, 58);
+      doc.setFont('helvetica', 'normal');
+      
+      let yPos = 66;
+      revenueData.forEach(r => {
+         doc.text(`${r.name}: Rs. ${r.value.toFixed(2)}`, 14, yPos);
+         yPos += 8;
+      });
+
+      yPos += 8;
+      doc.setFont('helvetica', 'bold');
+      doc.text("Order Details:", 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      yPos += 8;
+
+      filteredOrders.forEach((order, index) => {
+        if(yPos > 275) {
+            doc.addPage();
+            yPos = 20;
+        }
+        const orderId = order._id.substring(order._id.length - 6);
+        const items = order.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${index + 1}. Order #${orderId} - Rs. ${order.totalAmount.toFixed(2)} [${order.status}]`, 14, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`    User: ${order.user?.name || 'Guest'} | Ticket: ${order.ticketId || 'N/A'} | Pay: ${order.paymentMethod}`, 14, yPos + 6);
+        doc.text(`    Items: ${items}`, 14, yPos + 12);
+        
+        yPos += 20;
+      });
+
+      doc.save(`Food_Report_${new Date().getTime()}.pdf`);
+      toast.dismiss(loadingToast);
+      toast.success('PDF Report downloaded successfully!');
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+      toast.error('Failed to generate PDF.');
     }
   };
 
@@ -204,13 +262,24 @@ export function AdminFoodDashboard() {
                 <span className="text-gray-500 font-bold mr-2">Total Sales:</span>
                 <span className="text-2xl font-black text-amber-500">Rs. {totalSales.toFixed(2)}</span>
               </div>
-              <button
-                onClick={generateReport}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"
-              >
-                <Download size={20} />
-                Generate Report
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={generateCSVReport}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"
+                  title="Download Excel/CSV"
+                >
+                  <FileSpreadsheet size={20} />
+                  CSV
+                </button>
+                <button
+                  onClick={generatePDFReport}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"
+                  title="Download PDF"
+                >
+                  <FileText size={20} />
+                  PDF
+                </button>
+              </div>
             </div>
           </div>
 
