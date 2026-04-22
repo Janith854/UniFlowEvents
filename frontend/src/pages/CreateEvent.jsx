@@ -39,7 +39,7 @@ export function CreateEvent() {
         if (!value.trim()) err = 'Organizer name is required';
         break;
       case 'category':
-        const validCategories = ['Sports', 'Music', 'Workshop', 'Seminar', 'Cultural', 'Community', 'Miscellaneous'];
+        const validCategories = ['Academic', 'Social', 'Sports', 'Workshop', 'Seminar', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'];
         if (!value || !validCategories.includes(value)) err = 'Please select a valid category';
         break;
       case 'location':
@@ -246,13 +246,9 @@ export function CreateEvent() {
                   className={`w-full bg-gray-50 border-2 rounded-2xl px-5 py-3 text-gray-900 font-medium transition-all outline-none ${errors.category ? 'border-rose-500 bg-rose-50/10' : 'border-transparent focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10'}`}
                 >
                   <option value="">Select Category</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Music">Music</option>
-                  <option value="Workshop">Workshop</option>
-                  <option value="Seminar">Seminar</option>
-                  <option value="Cultural">Cultural</option>
-                  <option value="Community">Community</option>
-                  <option value="Miscellaneous">Miscellaneous</option>
+                  {['Academic', 'Social', 'Sports', 'Workshop', 'Seminar', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
                 {errors.category && <p className="text-xs font-bold text-rose-500 px-1">{errors.category}</p>}
               </div>

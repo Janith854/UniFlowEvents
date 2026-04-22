@@ -185,7 +185,7 @@ export function EditEvent() {
                 className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
               >
                 <option value="">Select a category</option>
-                {['Sports', 'Music', 'Workshop', 'Seminar', 'Cultural', 'Community', 'Academic', 'Career', 'Miscellaneous'].map(c => (
+                {['Academic', 'Social', 'Sports', 'Workshop', 'Seminar', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'].map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>

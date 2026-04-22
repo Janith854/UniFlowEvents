@@ -8,7 +8,7 @@ const eventSchema = new mongoose.Schema({
     organizerName: { type: String },
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     // Phase 1 Additions
-    category: { type: String, enum: ['Academic', 'Social', 'Sports', 'Workshop', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'], default: 'Other' },
+    category: { type: String, enum: ['Academic', 'Social', 'Sports', 'Workshop', 'Seminar', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'], default: 'Other' },
     capacity: { type: Number, required: true, default: -1 }, // -1 = Unlimited
     ticketing: {
         regularPrice: { type: Number, default: 0 },

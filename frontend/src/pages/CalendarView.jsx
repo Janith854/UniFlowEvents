@@ -22,7 +22,12 @@ const CATEGORY_COLORS = {
   Social:    { bg: '#8b5cf6', light: '#f5f3ff', text: '#6d28d9', border: '#ddd6fe' },
   Sports:    { bg: '#10b981', light: '#ecfdf5', text: '#065f46', border: '#a7f3d0' },
   Workshop:  { bg: '#f59e0b', light: '#fffbeb', text: '#92400e', border: '#fde68a' },
+  Seminar:   { bg: '#6366f1', light: '#eef2ff', text: '#4338ca', border: '#c7d2fe' },
   Cultural:  { bg: '#ec4899', light: '#fdf2f8', text: '#9d174d', border: '#fbcfe8' },
+  Career:    { bg: '#06b6d4', light: '#ecfeff', text: '#0891b2', border: '#a5f3fc' },
+  Tech:      { bg: '#14b8a6', light: '#f0fdfa', text: '#0d9488', border: '#99f6e4' },
+  Music:     { bg: '#f43f5e', light: '#fff1f2', text: '#be123c', border: '#fecdd3' },
+  Art:       { bg: '#a855f7', light: '#f5f3ff', text: '#7e22ce', border: '#ddd6fe' },
   Other:     { bg: '#64748b', light: '#f8fafc', text: '#334155', border: '#cbd5e1' },
 };
 
