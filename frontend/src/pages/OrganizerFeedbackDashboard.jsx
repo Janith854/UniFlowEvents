@@ -48,6 +48,9 @@ export function OrganizerFeedbackDashboard() {
     positivePercentage: feedbacks.length > 0
       ? Math.round((feedbacks.filter(f => f.sentiment === 'Positive').length / feedbacks.length) * 100)
       : 0,
+    neutralPercentage: feedbacks.length > 0
+      ? Math.round((feedbacks.filter(f => f.sentiment === 'Neutral').length / feedbacks.length) * 100)
+      : 0,
     negativePercentage: feedbacks.length > 0
       ? Math.round((feedbacks.filter(f => f.sentiment === 'Negative').length / feedbacks.length) * 100)
       : 0,
