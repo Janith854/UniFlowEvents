@@ -167,6 +167,10 @@ export function OrganizerFeedbackDashboard() {
                 <p className="text-gray-500 font-medium">Manage student experiences and AI-driven insights</p>
                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last updated: {new Date().toLocaleTimeString()}</p>
+                <div className="flex items-center gap-1.5 ml-2 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-[8px] font-black text-red-600 uppercase tracking-widest">Live</span>
+                </div>
               </div>
             </div>
 
