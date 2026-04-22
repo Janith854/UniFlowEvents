@@ -52,6 +52,16 @@ exports.createEvent = async (req, res) => {
             body.organizer = req.user._id;
         }
 
+        // Prevent overlapping events for the same organizer
+        const existingEvent = await Event.findOne({
+            organizer: body.organizer,
+            date: body.date
+        });
+
+        if (existingEvent) {
+            return res.status(400).json({ msg: 'You already have an event scheduled for this date and time.' });
+        }
+
         const newEvent = new Event(body);
         const event = await newEvent.save();
         res.status(201).json(event);
@@ -89,6 +99,18 @@ exports.updateEvent = async (req, res) => {
         // Strip empty registrationDeadline
         if (!body.registrationDeadline) {
             delete body.registrationDeadline;
+        }
+
+        // Prevent overlapping events for the same organizer (excluding the current event)
+        if (body.date) {
+            const conflict = await Event.findOne({
+                organizer: req.user._id,
+                date: body.date,
+                _id: { $ne: req.params.id }
+            });
+            if (conflict) {
+                return res.status(400).json({ msg: 'You already have another event scheduled for this date and time.' });
+            }
         }
 
         const updatedEvent = await Event.findByIdAndUpdate(req.params.id, body, { new: true });
