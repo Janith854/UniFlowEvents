@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-<<<<<<< HEAD
-import { useAuth } from '../hooks/useAuth';
-import { User, Mail, Lock, Sparkles, ArrowRight, UserCircle, Eye, EyeOff } from 'lucide-react';
-=======
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { User, Mail, Lock, ArrowRight, UserCircle, Eye, EyeOff } from 'lucide-react';
->>>>>>> develop2
 
 export function LoginPage() {
   const { login, register } = useAuth();
@@ -103,10 +98,6 @@ export function LoginPage() {
   };
 
   return (
-<<<<<<< HEAD
-    <main className="flex-1 flex items-center justify-center p-4 pt-24 pb-12">
-        <motion.div 
-=======
     <div className="min-h-screen relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 bg-[url('/images/logging.jpg')] bg-cover bg-center" />
       <div className="absolute inset-0 bg-black/40" />
@@ -114,7 +105,6 @@ export function LoginPage() {
 
       <main className="relative z-10 flex-1 flex items-center justify-center p-4 pt-28 pb-12">
         <motion.div
->>>>>>> develop2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-xl"

@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002/api';
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002';
+const BASE_URL = RAW_BASE_URL.endsWith('/api') ? RAW_BASE_URL.slice(0, -4) : RAW_BASE_URL;
+const API_BASE_URL = `${BASE_URL}/api`;
 const API = axios.create({ baseURL: API_BASE_URL });
 const AUTH_STORAGE_KEY = 'uniflow_auth';
 
@@ -39,4 +41,5 @@ API.interceptors.response.use(
     }
 );
 
+export { BASE_URL, API_BASE_URL };
 export default API;

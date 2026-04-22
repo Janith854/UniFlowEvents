@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as feedbackService from '../services/feedbackService';
 import { MessageSquare, Star, Filter, Send, Trash2, Smile, Meh, Frown, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Navbar } from '../components/Navbar';
 
 export function OrganizerFeedbackDashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -64,7 +65,9 @@ export function OrganizerFeedbackDashboard() {
   };
 
   return (
-    <main className="pt-24 px-4 pb-16">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="pt-24 px-4 pb-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>

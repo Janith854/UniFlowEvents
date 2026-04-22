@@ -248,7 +248,6 @@ export function EditEvent() {
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 }

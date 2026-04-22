@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { createFeedback } from '../services/feedbackService';
-import { getEvents } from '../services/eventService';
-import { useAuth } from '../hooks/useAuth';
-=======
 import { Calendar, MapPin, MessageSquare } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { getEvents } from '../services/eventService';
 import { FeedbackModal } from '../components/FeedbackModal';
->>>>>>> develop2
 
 export function Feedback() {
   const [events, setEvents] = useState([]);
@@ -42,22 +36,6 @@ export function Feedback() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   const feedbackEvents = pastEvents.length > 0 ? pastEvents : events;
   return (
-<<<<<<< HEAD
-    <main className="pt-24 px-4 pb-16">
-        <div className="w-full max-w-xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
-            Submit Feedback
-          </h1>
-          
-          <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
-            {status && (
-              <div className={`mb-6 p-4 rounded-lg text-sm font-medium ${
-                status.includes('success') 
-                  ? 'bg-green-50 text-green-700 border border-green-100' 
-                  : 'bg-red-50 text-red-700 border border-red-100'
-              }`}>
-                {status}
-=======
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="pt-24 px-4 pb-16">
@@ -112,12 +90,11 @@ export function Feedback() {
                     </div>
                   </div>
                 ))}
->>>>>>> develop2
               </div>
             )}
           </section>
-
         </div>
+
         <FeedbackModal
           isOpen={isFormOpen}
           onClose={handleCloseForm}

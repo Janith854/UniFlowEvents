@@ -163,12 +163,14 @@ export function FoodSuccessPage() {
     const rewardEligible = totalAmount > 2000;
     const ecoVoucher = avgEcoScore === 100;
 
-  return (
-    <main className="pt-24 px-4 pb-16 flex flex-col items-center justify-center text-center">
+    return (
+        <div className="min-h-screen bg-gray-50 text-zinc-950 font-sans">
+            <Navbar />
+            <main className="pt-24 px-4 pb-16 flex flex-col items-center justify-center text-center">
                 <div className="bg-green-50 p-8 rounded-3xl shadow-sm border border-green-100 max-w-md w-full">
                     <h2 className="text-3xl font-black text-green-700 mb-4 tracking-tight">Order Successful!</h2>
                     <p className="text-gray-700 mb-6 font-medium text-lg">Present this QR code at your selected pickup slot ({pickupSlot}).</p>
-                    
+
                     <div ref={qrRef} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 inline-block mb-6">
                         <QRCodeCanvas value={qrString} size={200} includeMargin={true} />
                     </div>
@@ -179,12 +181,12 @@ export function FoodSuccessPage() {
                             {Array.from(new Set(items.map(i => i.stallNumber))).map(stall => (
                                 <li key={stall} className="text-gray-800 font-medium text-sm border-l-4 border-amber-400 pl-3">
                                     <span className="font-black text-zinc-950 block mb-1">{stall}</span>
-                                    {items.filter(i => i.stallNumber === stall).map(i => `${i.quantity}x ${i.name}`).join(', ')} 
+                                    {items.filter(i => i.stallNumber === stall).map(i => `${i.quantity}x ${i.name}`).join(', ')}
                                 </li>
                             ))}
                         </ul>
                     </div>
-                    
+
                     {rewardEligible && (
                         <div className="mt-4 bg-yellow-100 border border-yellow-300 text-yellow-800 p-5 rounded-2xl flex items-center gap-4 shadow-sm text-left">
                             <span className="text-3xl">🎉</span>
@@ -204,8 +206,8 @@ export function FoodSuccessPage() {
                             </div>
                         </div>
                     )}
-                    
-                    <button 
+
+                    <button
                         onClick={() => navigate('/food')}
                         className="mt-8 px-8 py-4 bg-amber-400 text-zinc-950 rounded-2xl hover:bg-amber-300 transition-all font-black shadow-lg shadow-amber-200 active:scale-95 w-full uppercase tracking-widest text-xs"
                     >
