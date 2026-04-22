@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getFoodOrders, updateFoodOrder } from '../services/foodService';
 import toast from 'react-hot-toast';
+import { Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import io from 'socket.io-client';
 
 export function AdminFoodDashboard() {
@@ -113,6 +116,64 @@ export function AdminFoodDashboard() {
   });
   const statusData = Object.keys(statusMap).map(key => ({ name: key, count: statusMap[key] }));
 
+  const generateReport = async () => {
+    try {
+      const loadingToast = toast.loading('Generating report...');
+      
+      // 1. Generate CSV Data
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "UniFlow - Admin Food Dashboard Real-Time Report\n";
+      csvContent += `Generated At, ${new Date().toLocaleString()}\n\n`;
+      
+      csvContent += "SUMMARY\n";
+      csvContent += `Total Sales (Rs.), ${totalSales.toFixed(2)}\n`;
+      csvContent += `Total Orders, ${filteredOrders.length}\n`;
+      
+      csvContent += "\nSTALL REVENUE\n";
+      revenueData.forEach(r => {
+         csvContent += `${r.name}, Rs. ${r.value.toFixed(2)}\n`;
+      });
+      
+      csvContent += "\nORDER DETAILS\n";
+      csvContent += "Order ID,User,Ticket,Items,Stalls,Payment Method,Payment Status,Total Amount (Rs.),Status\n";
+      
+      filteredOrders.forEach(order => {
+        const orderId = order._id.substring(order._id.length - 6);
+        const user = order.user?.name || 'Guest';
+        const ticket = order.ticketId || 'N/A';
+        const items = order.items.map(i => `${i.quantity}x ${i.name}`).join(' | ');
+        const stalls = order.items.map(i => i.stallNumber || 'General').join(' | ');
+        
+        const row = [
+          orderId,
+          `"${user}"`,
+          ticket,
+          `"${items}"`,
+          `"${stalls}"`,
+          order.paymentMethod || 'N/A',
+          order.paymentStatus || 'N/A',
+          order.totalAmount.toFixed(2),
+          order.status
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Food_Report_${new Date().getTime()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.dismiss(loadingToast);
+      toast.success('Report downloaded successfully!');
+    } catch (err) {
+      console.error('Failed to generate report:', err);
+      toast.error('Failed to generate report.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -143,6 +204,13 @@ export function AdminFoodDashboard() {
                 <span className="text-gray-500 font-bold mr-2">Total Sales:</span>
                 <span className="text-2xl font-black text-amber-500">Rs. {totalSales.toFixed(2)}</span>
               </div>
+              <button
+                onClick={generateReport}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"
+              >
+                <Download size={20} />
+                Generate Report
+              </button>
             </div>
           </div>
 
