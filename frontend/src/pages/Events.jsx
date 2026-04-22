@@ -245,7 +245,7 @@ export function Events() {
                       <Users className="w-4 h-4 mr-2 text-gray-300 flex-shrink-0" />
                       {event.capacity === -1
                         ? 'Capacity: Unlimited'
-                        : `Capacity: ${event.participants?.length || 0} / ${event.capacity}`}
+                        : `Capacity: ${event.capacity}`}
                     </div>
                   </div>
 
