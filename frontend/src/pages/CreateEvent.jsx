@@ -158,7 +158,7 @@ export function CreateEvent() {
       payload.append('organizerName', formData.organizerName);
       payload.append('category', formData.category || 'Miscellaneous');
       payload.append('date', formData.date);
-      payload.append('registrationDeadline', formData.registrationDeadline);
+      if (formData.registrationDeadline) payload.append('registrationDeadline', formData.registrationDeadline);
       payload.append('location', formData.location);
       payload.append('description', formData.description);
       payload.append('capacity', formData.capacityType === 'Unlimited' ? 'Unlimited' : formData.capacity);

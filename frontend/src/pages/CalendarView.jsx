@@ -400,7 +400,7 @@ export function CalendarView() {
                   <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
                     <Users size={14} className="text-green-600" />
                   </div>
-                  <span className="font-medium text-gray-800">Capacity: {selectedEvent.capacity}</span>
+                  <span className="font-medium text-gray-800">Capacity: {selectedEvent.capacity === -1 ? 'Unlimited' : selectedEvent.capacity}</span>
                 </div>
               </div>
 

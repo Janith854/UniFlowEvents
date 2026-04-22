@@ -57,7 +57,7 @@ export function ApprovalQueue() {
                     <p className="flex items-center"><Clock className="w-4 h-4 mr-2" /> {new Date(event.date).toLocaleDateString()}</p>
                     <p className="flex items-center"><MapPin className="w-4 h-4 mr-2" /> {event.location}</p>
                     <p><strong>Organizer:</strong> {event.organizer?.name || 'Unknown'}</p>
-                    <p><strong>Capacity:</strong> {event.capacity}</p>
+                    <p><strong>Capacity:</strong> {event.capacity === -1 ? 'Unlimited' : event.capacity}</p>
                   </div>
                   <div className="flex gap-3">
                     <button

@@ -34,6 +34,18 @@ exports.createEvent = async (req, res) => {
         if (typeof body.ticketing === 'string') {
             try { body.ticketing = JSON.parse(body.ticketing); } catch (e) {}
         }
+
+        // Convert "Unlimited" capacity string to sentinel value -1
+        if (body.capacity === 'Unlimited' || body.capacity === '') {
+            body.capacity = -1;
+        } else if (body.capacity !== undefined) {
+            body.capacity = Number(body.capacity);
+        }
+
+        // Strip empty registrationDeadline so Mongoose doesn't try to cast empty string as Date
+        if (!body.registrationDeadline) {
+            delete body.registrationDeadline;
+        }
         
         // Ensure organizer is set
         if (req.user && req.user._id) {
@@ -65,6 +77,18 @@ exports.updateEvent = async (req, res) => {
 
         if (typeof body.ticketing === 'string') {
             try { body.ticketing = JSON.parse(body.ticketing); } catch (e) {}
+        }
+
+        // Convert "Unlimited" capacity string to sentinel value -1
+        if (body.capacity === 'Unlimited' || body.capacity === '') {
+            body.capacity = -1;
+        } else if (body.capacity !== undefined) {
+            body.capacity = Number(body.capacity);
+        }
+
+        // Strip empty registrationDeadline
+        if (!body.registrationDeadline) {
+            delete body.registrationDeadline;
         }
 
         const updatedEvent = await Event.findByIdAndUpdate(req.params.id, body, { new: true });

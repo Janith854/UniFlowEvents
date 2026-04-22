@@ -243,7 +243,9 @@ export function Events() {
                     </div>
                     <div className="flex items-center text-sm text-gray-500">
                       <Users className="w-4 h-4 mr-2 text-gray-300 flex-shrink-0" />
-                      Capacity: {event.participants?.length || 0} / {event.capacity}
+                      {event.capacity === -1
+                        ? 'Capacity: Unlimited'
+                        : `Capacity: ${event.participants?.length || 0} / ${event.capacity}`}
                     </div>
                   </div>
 

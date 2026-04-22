@@ -348,11 +348,15 @@ export function EventPage() {
                 <div className="border-t border-gray-100 pt-6 mb-6 mt-2">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-500 font-medium text-sm">Capacity</span>
-                    <span className="font-bold text-gray-900 flex items-center gap-1.5"><Users size={14}/> {event.capacity} seats</span>
+                    <span className="font-bold text-gray-900 flex items-center gap-1.5"><Users size={14}/> {event.capacity === -1 ? 'Unlimited' : `${event.capacity} seats`}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 font-medium text-sm">Deadline</span>
-                    <span className="font-bold text-gray-900">{format(new Date(event.registrationDeadline), 'MMM do')}</span>
+                    <span className="font-bold text-gray-900">
+                      {event.registrationDeadline
+                        ? format(new Date(event.registrationDeadline), 'MMM do')
+                        : 'Open'}
+                    </span>
                   </div>
                 </div>
 
