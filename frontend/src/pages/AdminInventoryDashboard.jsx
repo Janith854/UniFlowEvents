@@ -247,12 +247,12 @@ export function AdminInventoryDashboard() {
       yPos += 8;
       
       const cols = [
-        { title: "Item Name", w: 50, x: margin },
-        { title: "Category", w: 30, x: margin + 50 },
-        { title: "Stall", w: 30, x: margin + 80 },
-        { title: "Price", w: 25, x: margin + 110 },
-        { title: "Stock", w: 20, x: margin + 135 },
-        { title: "Status", w: 27, x: margin + 155 }
+        { title: "Item Name", w: 45, x: margin },
+        { title: "Category", w: 22, x: margin + 45 },
+        { title: "Stall", w: 45, x: margin + 67 },
+        { title: "Price", w: 23, x: margin + 112 },
+        { title: "Stock", w: 18, x: margin + 135 },
+        { title: "Status", w: 25, x: margin + 153 }
       ];
       
       doc.setFillColor(...primaryColor);
@@ -271,7 +271,8 @@ export function AdminInventoryDashboard() {
       
       filteredItems.forEach((item, index) => {
         const itemName = doc.splitTextToSize(item.name, cols[0].w - 4);
-        const rowHeight = Math.max(12, itemName.length * 5 + 4);
+        const stallName = doc.splitTextToSize(item.stallNumber || 'General', cols[2].w - 4);
+        const rowHeight = Math.max(12, itemName.length * 5 + 4, stallName.length * 5 + 4);
         
         if (yPos + rowHeight > pageHeight - margin) {
             doc.addPage();
@@ -301,7 +302,7 @@ export function AdminInventoryDashboard() {
         
         doc.text(itemName, cols[0].x + 2, yPos + 6);
         doc.text(item.category, cols[1].x + 2, yPos + 6);
-        doc.text(item.stallNumber || 'General', cols[2].x + 2, yPos + 6);
+        doc.text(stallName, cols[2].x + 2, yPos + 6);
         doc.setFont('helvetica', 'bold');
         doc.text(`Rs. ${item.price}`, cols[3].x + 2, yPos + 6);
         doc.setFont('helvetica', 'normal');
