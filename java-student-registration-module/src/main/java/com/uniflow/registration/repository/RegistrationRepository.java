@@ -10,8 +10,19 @@ import org.bson.Document;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
+import java.util.ArrayList;
+import java.util.List;
+import com.mongodb.client.FindIterable;
+
 public class RegistrationRepository {
     private final MongoCollection<Document> registrations = MongoConnection.getDatabase().getCollection("registrations");
+
+    public List<Document> findAllByUserId(String userId) {
+        FindIterable<Document> docs = registrations.find(eq("userId", userId));
+        List<Document> list = new ArrayList<>();
+        docs.forEach(list::add);
+        return list;
+    }
 
     public boolean existsByUserAndEvent(String userId, String eventId) {
         return registrations.find(and(eq("userId", userId), eq("eventId", eventId))).first() != null;
