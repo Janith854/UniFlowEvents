@@ -138,8 +138,19 @@ export function OrganizerFeedbackDashboard() {
     }
   };
 
-  const handleSendReply = (feedback) => {
-    toast.success(`Reply sent to ${feedback.user?.name || 'Student'}: "${feedback.aiSuggestedReply}"`);
+  const handleSendReply = async (feedback, customMessage = null) => {
+    const message = customMessage || feedback.aiSuggestedReply;
+    try {
+      await feedbackService.replyToFeedback(feedback._id, message);
+      toast.success(`Reply sent to ${feedback.user?.name || 'Student'}`);
+      fetchFeedback();
+    } catch (err) {
+      toast.error('Failed to send reply');
+    }
+  };
+
+  const handleQuickReply = (feedback, text) => {
+    handleSendReply(feedback, text);
   };
 
   const getSentimentIcon = (sentiment) => {
@@ -438,6 +449,16 @@ export function OrganizerFeedbackDashboard() {
                         </td>
                         <td className="px-8 py-6">
                           <p className="text-sm text-gray-600 line-clamp-2 max-w-xs">{f.overall?.comment || 'No comment provided.'}</p>
+                          {f.replies?.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-100">
+                              <p className="text-[10px] font-black text-zinc-950 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                <MessageCircle size={10} className="text-amber-500" /> Latest Student Reply:
+                              </p>
+                              <p className="text-[11px] text-gray-500 italic bg-white p-2 rounded-lg border border-gray-50 shadow-sm">
+                                "{f.replies[f.replies.length - 1].message}"
+                              </p>
+                            </div>
+                          )}
                         </td>
                         <td className="px-8 py-6">
                           <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100 max-w-sm">
@@ -446,7 +467,7 @@ export function OrganizerFeedbackDashboard() {
                               {['Thanks!', 'Good job', 'Understood'].map(text => (
                                 <button 
                                   key={text}
-                                  onClick={() => toast.success(`Reply sent: ${text}`)}
+                                  onClick={() => handleQuickReply(f, text)}
                                   className="text-[9px] font-bold px-2 py-0.5 bg-white border border-amber-200 rounded-md text-amber-600 hover:bg-amber-100 transition-colors"
                                 >
                                   {text}
@@ -454,6 +475,13 @@ export function OrganizerFeedbackDashboard() {
                               ))}
                             </div>
                           </div>
+                          {f.replies?.length > 0 && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="text-[9px] font-black bg-zinc-950 text-white px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                {f.replies.length} {f.replies.length === 1 ? 'Reply' : 'Replies'}
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-8 py-6">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
