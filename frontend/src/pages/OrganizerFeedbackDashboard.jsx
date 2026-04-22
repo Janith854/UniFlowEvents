@@ -135,6 +135,14 @@ export function OrganizerFeedbackDashboard() {
               </button>
 
               <button 
+                onClick={() => setFilters({ ...filters, sentiment: 'Negative' })}
+                className="bg-red-50 text-red-600 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-red-100 transition-all border border-red-100"
+              >
+                <Frown size={14} />
+                Show Issues
+              </button>
+
+              <button 
                 onClick={() => toast.success('Feedback data exported to CSV')}
                 className="bg-zinc-950 text-white px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
               >
