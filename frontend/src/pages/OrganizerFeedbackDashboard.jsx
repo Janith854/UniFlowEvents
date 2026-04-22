@@ -211,6 +211,10 @@ export function OrganizerFeedbackDashboard() {
                 <h3 className="text-4xl font-black text-zinc-950">{stats.totalCount}</h3>
                 <span className="text-gray-400 font-bold text-sm uppercase">Responses</span>
               </div>
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Top Source</p>
+                <p className="text-[11px] font-black text-zinc-950 truncate">{stats.sourceBreakdown[0]?.title || 'N/A'}</p>
+              </div>
             </div>
 
             {/* Satisfaction */}
