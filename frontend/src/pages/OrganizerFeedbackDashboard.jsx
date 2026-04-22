@@ -226,8 +226,8 @@ export function OrganizerFeedbackDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredFeedbacks.length > 0 ? filteredFeedbacks.map((f) => (
-                      <tr key={f._id} className="hover:bg-gray-50/30 transition-colors group">
-                        <td className="px-8 py-6">
+                      <tr key={f._id} className="hover:bg-amber-50/20 transition-all group">
+                        <td className="px-8 py-6 border-l-4 border-l-transparent group-hover:border-l-amber-400 transition-all">
                           <div className="space-y-1">
                             <p className="font-black text-zinc-950 text-sm leading-tight">{f.user?.name || 'Unknown'}</p>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{f.event?.title || 'General'}</p>
