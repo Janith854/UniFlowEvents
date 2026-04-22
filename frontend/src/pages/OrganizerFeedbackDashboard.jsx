@@ -117,7 +117,15 @@ export function OrganizerFeedbackDashboard() {
           return acc;
         }, {}))
         .sort((a, b) => b[1] - a[1])[0][0]
-      : 'None'
+      : 'None',
+    topPositiveKeyword: feedbacks.filter(f => f.sentiment === 'Positive').length > 0
+      ? Object.entries(feedbacks.filter(f => f.sentiment === 'Positive').reduce((acc, f) => {
+          const words = (f.overall?.comment || '').toLowerCase().split(/\W+/).filter(w => w.length > 3 && !['this', 'that', 'with', 'very', 'good', 'event', 'great'].includes(w));
+          words.forEach(w => acc[w] = (acc[w] || 0) + 1);
+          return acc;
+        }, {}))
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || 'Amazing'
+      : 'Positive'
   };
 
   const handleDelete = async (id) => {
