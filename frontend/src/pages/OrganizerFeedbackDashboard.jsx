@@ -279,8 +279,15 @@ export function OrganizerFeedbackDashboard() {
             {/* Satisfaction */}
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-green-200 transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-50 rounded-2xl text-green-500 group-hover:scale-110 transition-transform">
-                  <Smile size={24} />
+                <div className="w-20 h-10 group-hover:scale-110 transition-transform text-green-500">
+                  <GaugeChart 
+                    id="satisfaction-gauge" 
+                    nrOfLevels={20} 
+                    percent={stats.positivePercentage / 100} 
+                    colors={['#ef4444', '#22c55e']} 
+                    arcWidth={0.3} 
+                    hideText
+                  />
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Satisfaction</span>
               </div>
