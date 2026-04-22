@@ -4,8 +4,6 @@ import { MessageSquare, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, Che
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
-import GaugeChartImport from 'react-gauge-chart';
-const GaugeChart = GaugeChartImport.default || GaugeChartImport;
 
 export function OrganizerFeedbackDashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -240,141 +238,55 @@ export function OrganizerFeedbackDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
-            {/* Average Rating */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-amber-200 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-amber-50 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
-                  <Star size={24} fill="currentColor" />
-                </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall Rating</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-black text-zinc-950">{stats.averageRating}</h3>
-                <span className="text-gray-400 font-bold">/ 5.0</span>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-50">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Top Performer</p>
-                <p className="text-[11px] font-black text-zinc-950 truncate">{stats.topEvent}</p>
-              </div>
-            </div>
-
-            {/* Total Feedback */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-blue-200 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-50 rounded-2xl text-blue-500 group-hover:scale-110 transition-transform">
-                  <MessageSquare size={24} />
+          <div className="flex justify-center mb-10">
+            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-2xl shadow-blue-100/50 flex flex-col justify-between group hover:border-blue-200 transition-all w-full max-w-xl">
+              <div className="flex items-center justify-between mb-8">
+                <div className="p-5 bg-blue-50 rounded-3xl text-blue-600 group-hover:scale-110 transition-transform">
+                  <MessageSquare size={40} />
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Feedback</span>
-                  <span className="text-[9px] font-bold text-blue-400 flex items-center gap-0.5 mt-0.5">
-                    +12 new
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-black text-zinc-950">{stats.totalFeedback}</h3>
-                <span className="text-gray-400 font-bold text-sm uppercase">Responses</span>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-50">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Top Source</p>
-                <p className="text-[11px] font-black text-zinc-950 truncate">{stats.sourceBreakdown[0]?.title || 'N/A'}</p>
-              </div>
-            </div>
-
-            {/* Satisfaction */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-green-200 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-50 rounded-2xl text-green-500 group-hover:scale-110 transition-transform">
-                  <Smile size={24} />
-                </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Satisfaction</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-baseline gap-1">
-                    <h3 className="text-3xl font-black text-zinc-950">{stats.positivePercentage}%</h3>
-                    <span className="text-green-500 font-bold text-[10px] uppercase tracking-tighter">Pos</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <h3 className="text-lg font-black text-zinc-950/60">{stats.neutralPercentage}%</h3>
-                    <span className="text-amber-500 font-bold text-[10px] uppercase tracking-tighter">Neu</span>
-                  </div>
-                  <div className="flex items-baseline gap-1 text-right">
-                    <h3 className="text-xl font-black text-zinc-950/40">{stats.negativePercentage}%</h3>
-                    <span className="text-red-400 font-bold text-[10px] uppercase tracking-tighter">Neg</span>
+                  <span className="text-[14px] font-black text-gray-400 uppercase tracking-[0.2em]">Total Feedback</span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[11px] font-bold text-green-600 uppercase tracking-widest">Live Monitoring</span>
                   </div>
                 </div>
-                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden flex">
-                  <div className="bg-green-500 h-full transition-all duration-1000" style={{ width: `${stats.positivePercentage}%` }}></div>
-                  <div className="bg-amber-400 h-full transition-all duration-1000" style={{ width: `${stats.neutralPercentage}%` }}></div>
-                  <div className="bg-red-400 h-full transition-all duration-1000" style={{ width: `${stats.negativePercentage}%` }}></div>
+              </div>
+              <div className="flex items-baseline gap-4 mb-8">
+                <h3 className="text-8xl font-black text-zinc-950 tracking-tighter">{stats.totalFeedback}</h3>
+                <span className="text-gray-400 font-bold text-2xl uppercase tracking-widest">Responses</span>
+              </div>
+              <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-100">
+                <div>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Highest Volume Event</p>
+                  <p className="text-[15px] font-black text-zinc-950 truncate">{stats.sourceBreakdown[0]?.title || 'N/A'}</p>
                 </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-50">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Top Praise</p>
-                <p className="text-[11px] font-black text-green-600 truncate capitalize">"{stats.topPositiveKeyword}"</p>
-              </div>
-            </div>
-
-            {/* Common Complaints */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-red-200 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-red-50 rounded-2xl text-red-500 group-hover:scale-110 transition-transform">
-                  <Frown size={24} />
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Common Complaints</span>
-                  {stats.negativePercentage > 30 && (
-                    <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full mt-0.5 animate-pulse">
-                      Critical Attention
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-50 mb-4">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Issue Volume</p>
-                <p className="text-[11px] font-black text-red-600 truncate">{stats.topComplainedEvent}</p>
-              </div>
-              <div className="space-y-2">
-                {stats.complaints.length > 0 ? stats.complaints.map((c, i) => (
-                  <p key={i} className="text-[10px] font-bold text-gray-600 line-clamp-1 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
-                    • {c}
-                  </p>
-                )) : (
-                  <p className="text-[10px] font-bold text-green-600 uppercase tracking-tighter flex items-center gap-1">
-                    <CheckCircle2 size={12} /> No major issues reported
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Category Insights */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-purple-200 transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-purple-50 rounded-2xl text-purple-500 group-hover:scale-110 transition-transform">
-                  <CheckCircle2 size={24} />
-                </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Category Performance</span>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Food</span>
-                  <div className="flex items-center gap-1">
-                    <Star size={10} className="text-amber-400 fill-amber-400" />
-                    <span className="text-sm font-black text-zinc-950">{stats.foodAvg}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">Parking</span>
-                  <div className="flex items-center gap-1">
-                    <Star size={10} className="text-amber-400 fill-amber-400" />
-                    <span className="text-sm font-black text-zinc-950">{stats.parkingAvg}</span>
+                <div className="text-right">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Overall Sentiment</p>
+                  <div className="flex items-center justify-end gap-2">
+                    <div className="h-2 w-24 bg-gray-100 rounded-full overflow-hidden flex">
+                      <div style={{ width: `${stats.positivePercentage}%` }} className="h-full bg-green-500" />
+                      <div style={{ width: `${stats.neutralPercentage}%` }} className="h-full bg-amber-400" />
+                      <div style={{ width: `${stats.negativePercentage}%` }} className="h-full bg-red-400" />
+                    </div>
+                    <p className="text-[15px] font-black text-green-600">{stats.positivePercentage}%</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+
+
+
+
+
+
+
+
+
+
+
 
           {showCharts && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
