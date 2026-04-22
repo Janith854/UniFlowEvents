@@ -506,7 +506,14 @@ export function OrganizerFeedbackDashboard() {
                         <td className="px-8 py-6 border-l-4 border-l-transparent group-hover:border-l-amber-400 transition-all">
                           <div className="space-y-1">
                             <p className="font-black text-zinc-950 text-sm leading-tight">{f.user?.name || 'Unknown'}</p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{f.event?.title || 'General'}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{f.event?.title || 'General'}</p>
+                              {f.event?.title === stats.topEvent && (
+                                <span className="text-[8px] font-black bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full uppercase tracking-widest border border-amber-200">
+                                  Top Rated
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="px-8 py-6">
