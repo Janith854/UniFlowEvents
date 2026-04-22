@@ -116,6 +116,16 @@ export function OrganizerFeedbackDashboard() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button 
+                onClick={() => { fetchFeedback(); toast.success('Data refreshed'); }}
+                className="p-2.5 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:text-zinc-950 hover:border-gray-200 transition-all shadow-sm"
+                title="Refresh Data"
+              >
+                <div className={isLoading ? 'animate-spin' : ''}>
+                  <Filter size={18} />
+                </div>
+              </button>
+
+              <button 
                 onClick={() => toast.success('Feedback data exported to CSV')}
                 className="bg-zinc-950 text-white px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
               >
