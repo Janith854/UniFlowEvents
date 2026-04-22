@@ -107,7 +107,15 @@ export function OrganizerFeedbackDashboard() {
       : 'N/A',
     parkingAvg: feedbacks.filter(f => !f.parking?.notApplicable).length > 0
       ? (feedbacks.filter(f => !f.parking?.notApplicable).reduce((acc, f) => acc + (f.parking?.rating || 0), 0) / feedbacks.filter(f => !f.parking?.notApplicable).length).toFixed(1)
-      : 'N/A'
+      : 'N/A',
+    topComplainedEvent: feedbacks.filter(f => f.sentiment === 'Negative').length > 0
+      ? Object.entries(feedbacks.filter(f => f.sentiment === 'Negative').reduce((acc, f) => {
+          const title = f.event?.title || 'General';
+          acc[title] = (acc[title] || 0) + 1;
+          return acc;
+        }, {}))
+        .sort((a, b) => b[1] - a[1])[0][0]
+      : 'None'
   };
 
   const handleDelete = async (id) => {
