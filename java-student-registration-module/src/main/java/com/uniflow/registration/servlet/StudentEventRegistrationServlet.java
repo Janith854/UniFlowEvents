@@ -21,6 +21,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 
+/**
+ * Servlet for handling student registration for events.
+ * Provides functionality to view the registration form and process form submissions.
+ */
 @WebServlet("/student/register-event")
 public class StudentEventRegistrationServlet extends HttpServlet {
     private static final Logger logger = LoggerFactory.getLogger(StudentEventRegistrationServlet.class);
@@ -28,6 +32,9 @@ public class StudentEventRegistrationServlet extends HttpServlet {
     private final RegistrationRepository registrationRepository = new RegistrationRepository();
     private final TicketRepository ticketRepository = new TicketRepository();
 
+    /**
+     * Renders the registration form for a specific event.
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String eventId = req.getParameter("eventId");
@@ -51,6 +58,10 @@ public class StudentEventRegistrationServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/register-event.jsp").forward(req, resp);
     }
 
+    /**
+     * Processes event registration form submission.
+     * Validates input, increments registration count, and generates a ticket with QR code.
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String eventId = req.getParameter("eventId");
