@@ -4,6 +4,7 @@ import { MessageSquare, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, Che
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
+import GaugeChart from 'react-gauge-chart';
 
 export function OrganizerFeedbackDashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -230,15 +231,17 @@ export function OrganizerFeedbackDashboard() {
             {/* Average Rating */}
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-amber-200 transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-amber-50 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
-                  <Star size={24} fill="currentColor" />
+                <div className="w-20 h-10 group-hover:scale-110 transition-transform">
+                  <GaugeChart 
+                    id="rating-gauge" 
+                    nrOfLevels={5} 
+                    percent={Number(stats.averageRating) / 5} 
+                    colors={['#ef4444', '#f59e0b', '#fbbf24']} 
+                    arcWidth={0.3} 
+                    hideText
+                  />
                 </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall Rating</span>
-                  <span className="text-[9px] font-bold text-green-500 flex items-center gap-0.5 mt-0.5">
-                    +0.2 this week
-                  </span>
-                </div>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall Rating</span>
               </div>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-4xl font-black text-zinc-950">{stats.averageRating}</h3>
