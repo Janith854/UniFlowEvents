@@ -193,3 +193,54 @@ exports.deleteFeedback = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getFeedbackStats = async (req, res) => {
+    try {
+        const feedbacks = await Feedback.find({ status: 'submitted' });
+        
+        const totalFeedback = feedbacks.length;
+        let averageRating = 0;
+
+        if (totalFeedback > 0) {
+            const sum = feedbacks.reduce((acc, f) => acc + (f.averageRating || 0), 0);
+            averageRating = Math.round((sum / totalFeedback) * 10) / 10;
+        }
+
+        const satisfaction = {
+            positive: feedbacks.filter(f => f.sentiment === 'Positive').length,
+            neutral: feedbacks.filter(f => f.sentiment === 'Neutral').length,
+            negative: feedbacks.filter(f => f.sentiment === 'Negative').length
+        };
+
+        const complaintKeywords = ['slow', 'cold', 'expensive', 'crowded', 'parking', 'food', 'late', 'rude', 'unorganized'];
+        const complaintsMap = {};
+
+        feedbacks.forEach(f => {
+            const allComments = [
+                f.overall?.comment,
+                f.food?.comment,
+                f.parking?.comment
+            ].join(' ').toLowerCase();
+
+            complaintKeywords.forEach(keyword => {
+                if (allComments.includes(keyword)) {
+                    complaintsMap[keyword] = (complaintsMap[keyword] || 0) + 1;
+                }
+            });
+        });
+
+        const commonComplaints = Object.entries(complaintsMap)
+            .map(([keyword, count]) => ({ keyword, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+
+        res.json({
+            averageRating,
+            totalFeedback,
+            satisfaction,
+            commonComplaints
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
