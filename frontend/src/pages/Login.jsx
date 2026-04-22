@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
-import { Navbar } from '../components/Navbar';
+import { useAuth } from '../hooks/useAuth';
 import { User, Mail, Lock, Sparkles, ArrowRight, UserCircle, Eye, EyeOff } from 'lucide-react';
 
 export function LoginPage() {
@@ -97,10 +96,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      
-      <main className="flex-1 flex items-center justify-center p-4 pt-24 pb-12">
+    <main className="flex-1 flex items-center justify-center p-4 pt-24 pb-12">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -163,10 +163,8 @@ export function FoodSuccessPage() {
     const rewardEligible = totalAmount > 2000;
     const ecoVoucher = avgEcoScore === 100;
 
-    return (
-        <div className="min-h-screen bg-gray-50 text-zinc-950 font-sans">
-            <Navbar />
-            <main className="pt-24 px-4 pb-16 flex flex-col items-center justify-center text-center">
+  return (
+    <main className="pt-24 px-4 pb-16 flex flex-col items-center justify-center text-center">
                 <div className="bg-green-50 p-8 rounded-3xl shadow-sm border border-green-100 max-w-md w-full">
                     <h2 className="text-3xl font-black text-green-700 mb-4 tracking-tight">Order Successful!</h2>
                     <p className="text-gray-700 mb-6 font-medium text-lg">Present this QR code at your selected pickup slot ({pickupSlot}).</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Navbar } from '../components/Navbar';
 import { getEventById, updateEvent } from '../services/eventService';
+import { BASE_URL } from '../services/api';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 
@@ -50,7 +50,7 @@ export function EditEvent() {
           vipPrice: data.ticketing?.vipPrice ?? '0',
         });
         if (data.image) {
-          const imgUrl = data.image.startsWith('http') ? data.image : `http://localhost:5002${data.image}`;
+          const imgUrl = data.image.startsWith('http') ? data.image : `${BASE_URL}${data.image}`;
           setExistingImage(imgUrl);
           setImagePreview(imgUrl);
         }
@@ -120,10 +120,7 @@ export function EditEvent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="pt-32 flex justify-center text-gray-500 font-medium">Loading event...</div>
-      </div>
+      <div className="pt-32 flex justify-center text-gray-500 font-medium">Loading event...</div>
     );
   }
 
@@ -145,11 +142,9 @@ export function EditEvent() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="pt-24 pb-16 max-w-3xl mx-auto px-4 sm:px-6">
-        
-        {/* Header */}
+    <div className="pt-24 pb-16 max-w-3xl mx-auto px-4 sm:px-6">
+      
+      {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link to="/events" className="p-2 rounded-xl bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600" />

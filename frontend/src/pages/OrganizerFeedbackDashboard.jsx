@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../services/api';
-import { Navbar } from '../components/Navbar';
+import * as feedbackService from '../services/feedbackService';
 import { MessageSquare, Star, Filter, Send, Trash2, Smile, Meh, Frown, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -20,7 +19,7 @@ export function OrganizerFeedbackDashboard() {
 
   const fetchFeedback = async () => {
     try {
-      const { data } = await API.get('/feedback');
+      const { data } = await feedbackService.getAllFeedback();
       setFeedbacks(data);
       setIsLoading(false);
     } catch (err) {
@@ -43,7 +42,7 @@ export function OrganizerFeedbackDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this feedback?')) return;
     try {
-      await API.delete(`/feedback/${id}`);
+      await feedbackService.deleteFeedback(id);
       toast.success('Feedback deleted');
       fetchFeedback();
     } catch (err) {
@@ -65,9 +64,7 @@ export function OrganizerFeedbackDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="pt-24 px-4 pb-16">
+    <main className="pt-24 px-4 pb-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
