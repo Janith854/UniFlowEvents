@@ -212,7 +212,11 @@ exports.getFeedbackStats = async (req, res) => {
             negative: feedbacks.filter(f => f.sentiment === 'Negative').length
         };
 
-        const complaintKeywords = ['slow', 'cold', 'expensive', 'crowded', 'parking', 'food', 'late', 'rude', 'unorganized'];
+        const complaintKeywords = [
+            'slow', 'cold', 'expensive', 'crowded', 'parking', 'food', 'late', 'rude', 
+            'unorganized', 'loud', 'hot', 'dark', 'small', 'dirty', 'missing', 'wait',
+            'expensive', 'confusing', 'boring'
+        ];
         const complaintsMap = {};
 
         feedbacks.forEach(f => {
