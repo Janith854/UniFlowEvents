@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +26,8 @@ export function EventPage() {
   const [selectedTier, setSelectedTier] = useState('regular'); // 'regular' | 'vip'
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const ticketRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   // Payment Form State (controlled + validated)
 const CATEGORY_STYLES = {
@@ -169,6 +173,32 @@ const CATEGORY_STYLES = {
       setIsProcessing(false);
     }
   };
+  
+  const handleDownloadTicket = async () => {
+    if (!ticketRef.current) return;
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        backgroundColor: '#111827',
+        logging: false,
+        useCORS: true
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2]
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`Ticket-${ticketStatus.ticketId}.pdf`);
+    } catch (err) {
+      console.error('Download failed', err);
+      alert('Failed to download ticket. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -312,7 +342,7 @@ const CATEGORY_STYLES = {
                 )}
 
                 {/* E-Ticket Card Design */}
-                <div className="relative bg-gray-900 text-white rounded-3xl p-6 mb-6 overflow-hidden text-left shadow-2xl">
+                <div ref={ticketRef} className="relative bg-gray-900 text-white rounded-3xl p-6 mb-6 overflow-hidden text-left shadow-2xl">
                   {/* Decorative perforations */}
                   <div className="absolute top-1/2 -left-4 w-8 h-8 bg-white rounded-full -translate-y-1/2"></div>
                   <div className="absolute top-1/2 -right-4 w-8 h-8 bg-white rounded-full -translate-y-1/2"></div>
@@ -345,6 +375,17 @@ const CATEGORY_STYLES = {
                   </button>
                   <button onClick={() => navigate('/parking')} className="w-full bg-zinc-950 text-white py-4 rounded-2xl font-black hover:bg-zinc-800 transition-all shadow-md shadow-zinc-300 text-sm active:scale-95 flex items-center justify-center gap-2">
                     🚗 Reserve Parking Slot
+                  </button>
+                  <button 
+                    onClick={handleDownloadTicket} 
+                    disabled={isDownloading}
+                    className="w-full bg-blue-500 text-white py-4 rounded-2xl font-black hover:bg-blue-400 disabled:opacity-50 transition-all shadow-md shadow-blue-200 text-sm active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    {isDownloading ? (
+                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Generating PDF...</>
+                    ) : (
+                      <>📥 Download Ticket (PDF)</>
+                    )}
                   </button>
                   <button onClick={() => navigate('/events')} className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-md shadow-amber-200 text-sm active:scale-95 flex items-center justify-center gap-2">
                     Browse More Events
