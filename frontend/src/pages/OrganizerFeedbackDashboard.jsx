@@ -4,7 +4,8 @@ import { MessageSquare, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, Che
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
-import GaugeChart from 'react-gauge-chart';
+import GaugeChartImport from 'react-gauge-chart';
+const GaugeChart = GaugeChartImport.default || GaugeChartImport;
 
 export function OrganizerFeedbackDashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -44,25 +45,25 @@ export function OrganizerFeedbackDashboard() {
   };
 
   const stats = {
-    averageRating: feedbacks.length > 0 
+    averageRating: feedbacks && feedbacks.length > 0
       ? (feedbacks.reduce((acc, f) => acc + (f.overall?.rating || 0), 0) / feedbacks.length).toFixed(1)
-      : 0,
-    totalCount: feedbacks.length,
-    positivePercentage: feedbacks.length > 0
+      : '0.0',
+    totalFeedback: feedbacks?.length || 0,
+    positivePercentage: feedbacks && feedbacks.length > 0
       ? Math.round((feedbacks.filter(f => f.sentiment === 'Positive').length / feedbacks.length) * 100)
       : 0,
-    neutralPercentage: feedbacks.length > 0
+    neutralPercentage: feedbacks && feedbacks.length > 0
       ? Math.round((feedbacks.filter(f => f.sentiment === 'Neutral').length / feedbacks.length) * 100)
       : 0,
-    negativePercentage: feedbacks.length > 0
+    negativePercentage: feedbacks && feedbacks.length > 0
       ? Math.round((feedbacks.filter(f => f.sentiment === 'Negative').length / feedbacks.length) * 100)
       : 0,
-    complaints: Array.from(new Set(feedbacks
-      .filter(f => f.sentiment === 'Negative')
+    complaints: Array.from(new Set((feedbacks || [])
+      .filter(f => f?.sentiment === 'Negative')
       .map(f => f.overall?.comment)
       .filter(comment => comment && comment.trim().length > 0)
     )).slice(0, 3),
-    topEvent: feedbacks.length > 0
+    topEvent: feedbacks && feedbacks.length > 0
       ? Object.entries(feedbacks.reduce((acc, f) => {
           const title = f.event?.title || 'General';
           if (!acc[title]) acc[title] = { sum: 0, count: 0 };
@@ -73,7 +74,7 @@ export function OrganizerFeedbackDashboard() {
         .map(([title, data]) => ({ title, avg: data.sum / data.count }))
         .sort((a, b) => b.avg - a.avg)[0]?.title
       : 'N/A',
-    sourceBreakdown: feedbacks.length > 0
+    sourceBreakdown: feedbacks && feedbacks.length > 0
       ? Object.entries(feedbacks.reduce((acc, f) => {
           const title = f.event?.title || 'General';
           acc[title] = (acc[title] || 0) + 1;
@@ -84,10 +85,10 @@ export function OrganizerFeedbackDashboard() {
       : [],
     ratingData: [5, 4, 3, 2, 1].map(rating => ({
       name: `${rating} ★`,
-      count: feedbacks.filter(f => f.overall?.rating === rating).length,
+      count: (feedbacks || []).filter(f => f.overall?.rating === rating).length,
       rating
     })),
-    trendData: feedbacks.length > 0 ? feedbacks.slice().reverse().reduce((acc, f) => {
+    trendData: feedbacks && feedbacks.length > 0 ? feedbacks.slice().reverse().reduce((acc, f) => {
       const date = new Date(f.createdAt).toLocaleDateString();
       const existing = acc.find(d => d.date === date);
       if (existing) {
@@ -104,21 +105,21 @@ export function OrganizerFeedbackDashboard() {
       }
       return acc;
     }, []).slice(-7) : [],
-    foodAvg: feedbacks.filter(f => !f.food?.notApplicable).length > 0
+    foodAvg: feedbacks && feedbacks.filter(f => !f.food?.notApplicable).length > 0
       ? (feedbacks.filter(f => !f.food?.notApplicable).reduce((acc, f) => acc + (f.food?.rating || 0), 0) / feedbacks.filter(f => !f.food?.notApplicable).length).toFixed(1)
       : 'N/A',
-    parkingAvg: feedbacks.filter(f => !f.parking?.notApplicable).length > 0
+    parkingAvg: feedbacks && feedbacks.filter(f => !f.parking?.notApplicable).length > 0
       ? (feedbacks.filter(f => !f.parking?.notApplicable).reduce((acc, f) => acc + (f.parking?.rating || 0), 0) / feedbacks.filter(f => !f.parking?.notApplicable).length).toFixed(1)
       : 'N/A',
-    topComplainedEvent: feedbacks.filter(f => f.sentiment === 'Negative').length > 0
+    topComplainedEvent: feedbacks && feedbacks.filter(f => f.sentiment === 'Negative').length > 0
       ? Object.entries(feedbacks.filter(f => f.sentiment === 'Negative').reduce((acc, f) => {
           const title = f.event?.title || 'General';
           acc[title] = (acc[title] || 0) + 1;
           return acc;
         }, {}))
-        .sort((a, b) => b[1] - a[1])[0][0]
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || 'None'
       : 'None',
-    topPositiveKeyword: feedbacks.filter(f => f.sentiment === 'Positive').length > 0
+    topPositiveKeyword: feedbacks && feedbacks.filter(f => f.sentiment === 'Positive').length > 0
       ? Object.entries(feedbacks.filter(f => f.sentiment === 'Positive').reduce((acc, f) => {
           const words = (f.overall?.comment || '').toLowerCase().split(/\W+/).filter(w => w.length > 3 && !['this', 'that', 'with', 'very', 'good', 'event', 'great'].includes(w));
           words.forEach(w => acc[w] = (acc[w] || 0) + 1);
@@ -243,15 +244,8 @@ export function OrganizerFeedbackDashboard() {
             {/* Average Rating */}
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-amber-200 transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-20 h-10 group-hover:scale-110 transition-transform">
-                  <GaugeChart 
-                    id="rating-gauge" 
-                    nrOfLevels={5} 
-                    percent={Number(stats.averageRating) / 5} 
-                    colors={['#ef4444', '#f59e0b', '#fbbf24']} 
-                    arcWidth={0.3} 
-                    hideText
-                  />
+                <div className="p-3 bg-amber-50 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
+                  <Star size={24} fill="currentColor" />
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall Rating</span>
               </div>
@@ -279,7 +273,7 @@ export function OrganizerFeedbackDashboard() {
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-black text-zinc-950">{stats.totalCount}</h3>
+                <h3 className="text-4xl font-black text-zinc-950">{stats.totalFeedback}</h3>
                 <span className="text-gray-400 font-bold text-sm uppercase">Responses</span>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-50">
@@ -291,15 +285,8 @@ export function OrganizerFeedbackDashboard() {
             {/* Satisfaction */}
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-green-200 transition-all">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-20 h-10 group-hover:scale-110 transition-transform text-green-500">
-                  <GaugeChart 
-                    id="satisfaction-gauge" 
-                    nrOfLevels={20} 
-                    percent={stats.positivePercentage / 100} 
-                    colors={['#ef4444', '#22c55e']} 
-                    arcWidth={0.3} 
-                    hideText
-                  />
+                <div className="p-3 bg-green-50 rounded-2xl text-green-500 group-hover:scale-110 transition-transform">
+                  <Smile size={24} />
                 </div>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Satisfaction</span>
               </div>
