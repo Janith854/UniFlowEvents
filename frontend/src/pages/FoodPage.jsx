@@ -30,6 +30,8 @@ export function FoodPage() {
   const [orderedItems, setOrderedItems] = useState([]);
   const [ecoVoucher, setEcoVoucher] = useState(false);
   const [activeVouchers, setActiveVouchers] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
+
   const passRef = useRef();
   const qrRef = useRef();
   const ticketId = localStorage.getItem('eventTicketId');
@@ -494,6 +496,13 @@ export function FoodPage() {
                 .
               </div>
             )}
+
+            {errorMessage && (
+              <div className="mb-6 bg-red-50 border border-red-100 text-red-700 p-4 rounded-2xl font-semibold">
+                {errorMessage}
+              </div>
+            )}
+
             
             {hasLoyaltyReward && (
               <div className="mb-8 bg-gradient-to-r from-amber-400 to-orange-500 text-white p-5 rounded-2xl shadow-lg flex items-center gap-4">

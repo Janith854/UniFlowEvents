@@ -7,16 +7,31 @@ export function GlobalSocketListener() {
   const { user, token } = useAuth();
 
   useEffect(() => {
+<<<<<<< Updated upstream
     if (!token) return;
 
     // Connect to Backend universally
     const socket = io('http://localhost:5002', {
       withCredentials: true,
       auth: { token },
+=======
+    // Read token — fall back to localStorage if context not yet hydrated
+    const authToken = token || (() => {
+      try { return JSON.parse(localStorage.getItem('uniflow_auth'))?.token; } catch { return null; }
+    })();
+
+    const socket = io('http://localhost:5002', {
+      withCredentials: true,
+      auth: authToken ? { token: authToken } : {},
+    });
+
+    socket.on('connect_error', (err) => {
+      // Silently ignore auth errors — unauthenticated visitors don't need sockets
+      console.warn('Socket connect error (non-critical):', err.message);
+>>>>>>> Stashed changes
     });
 
     socket.on('food-order-status-changed', (order) => {
-      // Validate if the updated broadcast order securely belongs exactly to this logged-in client
       if (user && (order.user === user.id || order.user === user._id)) {
         if (order.status === 'Ready') {
           toast.success(

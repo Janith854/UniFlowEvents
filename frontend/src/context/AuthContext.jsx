@@ -27,17 +27,30 @@ export function AuthProvider({ children }) {
           return;
         }
 
+        // Optimistically set auth state from localStorage immediately
         setToken(parsed.token);
         setUser(parsed.user);
         setIsAuthenticated(true);
 
-        const profileResponse = await authService.getMe();
-        const latestUser = profileResponse.data.user;
-        setUser(latestUser);
-        localStorage.setItem(
-          AUTH_STORAGE_KEY,
-          JSON.stringify({ token: parsed.token, user: latestUser })
-        );
+        // Try to refresh profile from server — but ONLY clear session on 401, not network errors
+        try {
+          const profileResponse = await authService.getMe();
+          const latestUser = profileResponse.data.user;
+          setUser(latestUser);
+          localStorage.setItem(
+            AUTH_STORAGE_KEY,
+            JSON.stringify({ token: parsed.token, user: latestUser })
+          );
+        } catch (profileError) {
+          // Only log out if the server explicitly rejects the token (401)
+          if (profileError.response?.status === 401) {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            setToken(null);
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+          // On network errors (backend down), keep the cached session
+        }
       } catch (error) {
         localStorage.removeItem(AUTH_STORAGE_KEY);
         setToken(null);
@@ -46,6 +59,7 @@ export function AuthProvider({ children }) {
       } finally {
         setIsLoading(false);
       }
+
     };
 
     bootstrapAuth();
