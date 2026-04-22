@@ -3,20 +3,28 @@ import * as feedbackService from '../services/feedbackService';
 import { MessageSquare, Star, Filter, Send, Trash2, Smile, Meh, Frown, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
+import { FeedbackStats } from '../components/FeedbackStats';
 
 export function OrganizerFeedbackDashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [filteredFeedbacks, setFilteredFeedbacks] = useState([]);
+  const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({ rating: 'All', sentiment: 'All' });
 
   useEffect(() => {
     fetchFeedback();
+    fetchStats();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [filters, feedbacks]);
+  const fetchStats = async () => {
+    try {
+      const { data } = await feedbackService.getFeedbackStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load stats', err);
+    }
+  };
 
   const fetchFeedback = async () => {
     try {
