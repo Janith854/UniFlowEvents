@@ -207,7 +207,7 @@ export function OrganizerFeedbackDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
             {/* Average Rating */}
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-amber-200 transition-all">
               <div className="flex items-center justify-between mb-4">
@@ -310,6 +310,32 @@ export function OrganizerFeedbackDashboard() {
                     <CheckCircle2 size={12} /> No major issues reported
                   </p>
                 )}
+              </div>
+            </div>
+
+            {/* Category Insights */}
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 flex flex-col justify-between group hover:border-purple-200 transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-50 rounded-2xl text-purple-500 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 size={24} />
+                </div>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Category Performance</span>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Food</span>
+                  <div className="flex items-center gap-1">
+                    <Star size={10} className="text-amber-400 fill-amber-400" />
+                    <span className="text-sm font-black text-zinc-950">{stats.foodAvg}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Parking</span>
+                  <div className="flex items-center gap-1">
+                    <Star size={10} className="text-amber-400 fill-amber-400" />
+                    <span className="text-sm font-black text-zinc-950">{stats.parkingAvg}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
