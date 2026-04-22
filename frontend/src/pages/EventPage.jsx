@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
+import { Edit } from 'lucide-react';
 import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
 import { Calendar as CalendarIcon, MapPin, Users, Clock, Tag, CreditCard, CheckCircle, Ticket as TicketIcon, X, ShieldCheck } from 'lucide-react';
@@ -9,6 +11,7 @@ import { format } from 'date-fns';
 export function EventPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isOrganizer } = useAuth();
   
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -242,7 +245,43 @@ export function EventPage() {
 
         {/* Right Column: Ticketing / Action Card */}
         <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 sticky top-24">
+          {user?.role === 'organizer' ? (
+            <div className="bg-white p-6 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 sticky top-24">
+              <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <ShieldCheck className="text-indigo-500" />
+                {event.organizer?._id?.toString() === user?._id?.toString() ? 'Event Management' : 'Organizer View'}
+              </h3>
+              
+              {event.organizer?._id?.toString() === user?._id?.toString() ? (
+                <>
+                  <p className="text-gray-500 text-sm mb-6">You are the organizer of this event. You can manage participants and event details from here.</p>
+                  <div className="space-y-3">
+                    <Link 
+                      to={`/events/${event._id}/edit`}
+                      className="w-full bg-zinc-950 text-white py-4 rounded-2xl font-black hover:bg-zinc-800 transition-all shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Edit size={18} />
+                      Edit Event Details
+                    </Link>
+                    <button 
+                      onClick={() => navigate('/analytics')}
+                      className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-md flex items-center justify-center gap-2"
+                    >
+                      <Users size={18} />
+                      View Attendance Analytics
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-gray-600 text-sm font-medium leading-relaxed">
+                    Registration is restricted to students. As an organizer, you can view event details but cannot participate in registrations.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 sticky top-24">
             
             {ticketStatus ? (
               // ──────────────── E-TICKET SUCCESS VIEW ────────────────
@@ -370,6 +409,7 @@ export function EventPage() {
             )}
             
           </div>
+          )}
         </div>
 
       </div>
