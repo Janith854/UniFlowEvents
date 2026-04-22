@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as feedbackService from '../services/feedbackService';
-import { MessageSquare, Star, Filter, Send, Trash2, Smile, Meh, Frown, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
 
@@ -366,10 +366,10 @@ export function OrganizerFeedbackDashboard() {
                             </button>
                             <button 
                               onClick={() => handleDelete(f._id)}
-                              className="p-3 bg-amber-400 text-zinc-950 rounded-2xl hover:bg-amber-300 transition-all border border-zinc-950/10"
+                              className="p-3 bg-white text-gray-400 rounded-2xl hover:text-red-500 hover:bg-red-50 transition-all border border-gray-100 shadow-sm"
                               title="Delete Feedback"
                             >
-                              <Trash2 size={16} />
+                              <ChevronRight size={16} />
                             </button>
                           </div>
                         </td>
