@@ -370,12 +370,6 @@ const CATEGORY_STYLES = {
                 <p className="text-xs text-gray-500 font-medium mb-6">Total University Events Attended: <strong className="text-gray-900">{ticketStatus.eventsAttended}</strong></p>
                 
                 <div className="space-y-3">
-                  <button onClick={() => navigate('/food')} className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-md shadow-amber-200 text-sm active:scale-95 flex items-center justify-center gap-2">
-                    🍽️ Pre-order Event Food
-                  </button>
-                  <button onClick={() => navigate('/parking')} className="w-full bg-zinc-950 text-white py-4 rounded-2xl font-black hover:bg-zinc-800 transition-all shadow-md shadow-zinc-300 text-sm active:scale-95 flex items-center justify-center gap-2">
-                    🚗 Reserve Parking Slot
-                  </button>
                   <button 
                     onClick={handleDownloadTicket} 
                     disabled={isDownloading}
@@ -386,6 +380,12 @@ const CATEGORY_STYLES = {
                     ) : (
                       <>📥 Download Ticket (PDF)</>
                     )}
+                  </button>
+                  <button onClick={() => navigate('/food')} className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-md shadow-amber-200 text-sm active:scale-95 flex items-center justify-center gap-2">
+                    🍽️ Pre-order Event Food
+                  </button>
+                  <button onClick={() => navigate('/parking')} className="w-full bg-zinc-950 text-white py-4 rounded-2xl font-black hover:bg-zinc-800 transition-all shadow-md shadow-zinc-300 text-sm active:scale-95 flex items-center justify-center gap-2">
+                    🚗 Reserve Parking Slot
                   </button>
                   <button onClick={() => navigate('/events')} className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-md shadow-amber-200 text-sm active:scale-95 flex items-center justify-center gap-2">
                     Browse More Events
