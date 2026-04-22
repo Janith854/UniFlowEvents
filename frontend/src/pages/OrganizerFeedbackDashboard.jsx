@@ -254,7 +254,14 @@ export function OrganizerFeedbackDashboard() {
                 <div className="p-3 bg-red-50 rounded-2xl text-red-500 group-hover:scale-110 transition-transform">
                   <Frown size={24} />
                 </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Common Complaints</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Common Complaints</span>
+                  {stats.negativePercentage > 30 && (
+                    <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full mt-0.5 animate-pulse">
+                      Critical Attention
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 {stats.complaints.length > 0 ? stats.complaints.map((c, i) => (
