@@ -1,5 +1,7 @@
 package com.uniflow.registration.repository;
 
+import com.uniflow.registration.util.RegistrationStatus;
+
 import com.mongodb.client.MongoCollection;
 import com.uniflow.registration.model.Registration;
 import com.uniflow.registration.util.MongoConnection;
@@ -17,5 +19,9 @@ public class RegistrationRepository {
 
     public void insert(Registration registration) {
         registrations.insertOne(registration.toDocument());
+    }
+
+    public boolean updateStatus(String registrationId, RegistrationStatus status) {
+        return registrations.updateOne(eq("_id", registrationId), new Document("$set", new Document("status", status.name()))).getModifiedCount() > 0;
     }
 }
