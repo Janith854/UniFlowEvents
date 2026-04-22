@@ -480,7 +480,7 @@ const CATEGORY_STYLES = {
                   </>
                 )}
               </>
-            )}}
+            )}
             
           </div>
           )}
