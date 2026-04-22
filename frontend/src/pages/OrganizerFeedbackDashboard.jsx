@@ -136,7 +136,12 @@ export function OrganizerFeedbackDashboard() {
                 <div className="p-3 bg-amber-50 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
                   <Star size={24} fill="currentColor" />
                 </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall Rating</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall Rating</span>
+                  <span className="text-[9px] font-bold text-green-500 flex items-center gap-0.5 mt-0.5">
+                    +0.2 this week
+                  </span>
+                </div>
               </div>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-4xl font-black text-zinc-950">{stats.averageRating}</h3>
@@ -150,7 +155,12 @@ export function OrganizerFeedbackDashboard() {
                 <div className="p-3 bg-blue-50 rounded-2xl text-blue-500 group-hover:scale-110 transition-transform">
                   <MessageSquare size={24} />
                 </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Feedback</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Feedback</span>
+                  <span className="text-[9px] font-bold text-blue-400 flex items-center gap-0.5 mt-0.5">
+                    +12 new
+                  </span>
+                </div>
               </div>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-4xl font-black text-zinc-950">{stats.totalCount}</h3>
