@@ -19,7 +19,7 @@ export function AdminInventoryDashboard() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
-  const [newItem, setNewItem] = useState({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1', image: '' });
+  const [newItem, setNewItem] = useState({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1 (Hot Meals)', image: '' });
 
   useEffect(() => {
     fetchMenu();
@@ -112,7 +112,7 @@ export function AdminInventoryDashboard() {
       const res = await axios.post('http://localhost:5002/api/food/menu', payload, { headers: getAuthHeader() });
       setMenuItems([...menuItems, res.data]);
       setShowModal(false);
-      setNewItem({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1', image: '' });
+      setNewItem({ name: '', category: 'Meals', price: '', stockCount: '', ecoScore: '', stallNumber: 'Stall 1 (Hot Meals)', image: '' });
     } catch (err) {
       alert('Failed to physically insert new Menu Item.');
     }
