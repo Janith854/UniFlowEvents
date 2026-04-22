@@ -396,71 +396,91 @@ const CATEGORY_STYLES = {
             ) : (
               // ──────────────── REGISTRATION / PURCHASE VIEW ────────────────
               <>
-                <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                  <TicketIcon className="text-amber-400" />
-                  Registration
-                </h3>
-
-                {isPaid ? (
-                  <div className="space-y-4 mb-6">
-                    {/* Tier Selection */}
-                    <div 
-                      onClick={() => setSelectedTier('regular')}
-                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedTier === 'regular' ? 'border-gray-900 bg-gray-50' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-gray-900">Regular Ticket</span>
-                        <span className="font-black text-xl text-gray-900">Rs. {event.ticketing.regularPrice}</span>
-                      </div>
-                      <p className="text-xs text-gray-500">General admission to all areas.</p>
+                {new Date(event.date) < new Date() ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Clock size={32} />
                     </div>
-
-                    {event.ticketing.vipPrice > 0 && (
-                      <div 
-                        onClick={() => setSelectedTier('vip')}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all relative overflow-hidden ${selectedTier === 'vip' ? 'border-amber-400 bg-amber-50/50' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
-                      >
-                        <div className="flex justify-between items-center mb-1 relative z-10">
-                          <span className="font-bold text-amber-700 flex items-center gap-1">VIP Access <ShieldCheck size={14}/></span>
-                          <span className="font-black text-xl text-amber-700">Rs. {event.ticketing.vipPrice}</span>
-                        </div>
-                        <p className="text-xs text-amber-600/70 relative z-10">Front row seating, dedicated entrance, and VIP lounge access.</p>
-                        
-                        {/* Shimmer effect */}
-                        {selectedTier === 'vip' && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>}
-                      </div>
-                    )}
+                    <h3 className="text-xl font-black text-gray-900 mb-2">Registration Closed</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">
+                      This event has already taken place. Registration and ticket purchases are no longer available.
+                    </p>
+                    <button 
+                      onClick={() => navigate('/events')}
+                      className="mt-6 w-full bg-gray-100 text-gray-600 py-3 rounded-2xl font-bold hover:bg-gray-200 transition-all"
+                    >
+                      Explore Upcoming Events
+                    </button>
                   </div>
                 ) : (
-                  <div className="bg-green-50 rounded-2xl p-6 text-center mb-6">
-                    <span className="text-3xl font-black text-green-600">FREE</span>
-                    <p className="text-green-800 text-sm mt-1 font-medium">No payment required for this event.</p>
-                  </div>
+                  <>
+                    <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                      <TicketIcon className="text-amber-400" />
+                      Registration
+                    </h3>
+
+                    {isPaid ? (
+                      <div className="space-y-4 mb-6">
+                        {/* Tier Selection */}
+                        <div 
+                          onClick={() => setSelectedTier('regular')}
+                          className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedTier === 'regular' ? 'border-gray-900 bg-gray-50' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-gray-900">Regular Ticket</span>
+                            <span className="font-black text-xl text-gray-900">Rs. {event.ticketing.regularPrice}</span>
+                          </div>
+                          <p className="text-xs text-gray-500">General admission to all areas.</p>
+                        </div>
+
+                        {event.ticketing.vipPrice > 0 && (
+                          <div 
+                            onClick={() => setSelectedTier('vip')}
+                            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all relative overflow-hidden ${selectedTier === 'vip' ? 'border-amber-400 bg-amber-50/50' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
+                          >
+                            <div className="flex justify-between items-center mb-1 relative z-10">
+                              <span className="font-bold text-amber-700 flex items-center gap-1">VIP Access <ShieldCheck size={14}/></span>
+                              <span className="font-black text-xl text-amber-700">Rs. {event.ticketing.vipPrice}</span>
+                            </div>
+                            <p className="text-xs text-amber-600/70 relative z-10">Front row seating, dedicated entrance, and VIP lounge access.</p>
+                            
+                            {/* Shimmer effect */}
+                            {selectedTier === 'vip' && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-green-50 rounded-2xl p-6 text-center mb-6">
+                        <span className="text-3xl font-black text-green-600">FREE</span>
+                        <p className="text-green-800 text-sm mt-1 font-medium">No payment required for this event.</p>
+                      </div>
+                    )}
+
+                    <div className="border-t border-gray-100 pt-6 mb-6 mt-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-gray-500 font-medium text-sm">Capacity</span>
+                        <span className="font-bold text-gray-900 flex items-center gap-1.5"><Users size={14}/> {event.capacity === -1 ? 'Unlimited' : `${event.capacity} seats`}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 font-medium text-sm">Deadline</span>
+                        <span className="font-bold text-gray-900">
+                          {event.registrationDeadline
+                            ? format(new Date(event.registrationDeadline), 'MMM do')
+                            : 'Open'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={handleRegistrationClick}
+                      className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-xl shadow-amber-200 active:scale-95 text-xl"
+                    >
+                      {isPaid ? 'Checkout Securely' : 'Register for Free'}
+                    </button>
+                  </>
                 )}
-
-                <div className="border-t border-gray-100 pt-6 mb-6 mt-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-500 font-medium text-sm">Capacity</span>
-                    <span className="font-bold text-gray-900 flex items-center gap-1.5"><Users size={14}/> {event.capacity === -1 ? 'Unlimited' : `${event.capacity} seats`}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-medium text-sm">Deadline</span>
-                    <span className="font-bold text-gray-900">
-                      {event.registrationDeadline
-                        ? format(new Date(event.registrationDeadline), 'MMM do')
-                        : 'Open'}
-                    </span>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={handleRegistrationClick}
-                  className="w-full bg-amber-400 text-zinc-950 py-4 rounded-2xl font-black hover:bg-amber-300 transition-all shadow-xl shadow-amber-200 active:scale-95 text-xl"
-                >
-                  {isPaid ? 'Checkout Securely' : 'Register for Free'}
-                </button>
               </>
-            )}
+            )}}
             
           </div>
           )}
