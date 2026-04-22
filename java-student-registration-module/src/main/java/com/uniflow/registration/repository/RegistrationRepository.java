@@ -9,12 +9,15 @@ import org.bson.Document;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import com.mongodb.client.FindIterable;
 
 public class RegistrationRepository {
+    private static final Logger logger = LoggerFactory.getLogger(RegistrationRepository.class);
     private final MongoCollection<Document> registrations = MongoConnection.getDatabase().getCollection("registrations");
 
     public List<Document> findAllByUserId(String userId) {
@@ -40,6 +43,7 @@ public class RegistrationRepository {
     }
 
     public void insert(Registration registration) {
+        logger.info("Inserting new registration for user {} in event {}", registration.userId, registration.eventId);
         registrations.insertOne(registration.toDocument());
     }
 
