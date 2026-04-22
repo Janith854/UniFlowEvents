@@ -3,6 +3,8 @@ import { Navbar } from '../components/Navbar';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { FileSpreadsheet, FileText } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 
 export function AdminInventoryDashboard() {
   const { token } = useAuth();
@@ -116,15 +118,255 @@ export function AdminInventoryDashboard() {
     }
   };
 
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'All Categories' || item.category === categoryFilter;
+    const matchesStall = stallFilter === 'All Stalls' || (item.stallNumber && item.stallNumber.includes(stallFilter));
+    return matchesSearch && matchesCategory && matchesStall;
+  });
+
+  const generateCSVReport = async () => {
+    try {
+      const loadingToast = toast.loading('Generating Excel-ready CSV...');
+      
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      
+      csvContent += "UNIFLOW EVENTS - INVENTORY DASHBOARD REPORT\n";
+      csvContent += `Generated On,${new Date().toLocaleString()}\n\n`;
+      
+      const totalStock = filteredItems.reduce((acc, item) => acc + Number(item.stockCount), 0);
+      const totalValue = filteredItems.reduce((acc, item) => acc + (Number(item.price) * Number(item.stockCount)), 0);
+      const lowStockCount = filteredItems.filter(i => i.stockCount <= 5).length;
+
+      csvContent += "EXECUTIVE SUMMARY\n";
+      csvContent += `Total Unique Items,${filteredItems.length}\n`;
+      csvContent += `Total Stock Quantity,${totalStock}\n`;
+      csvContent += `Low Stock Alerts,${lowStockCount}\n`;
+      csvContent += `Estimated Inventory Value (Rs.),${totalValue.toFixed(2)}\n\n`;
+      
+      csvContent += "DETAILED INVENTORY LOG\n";
+      csvContent += "Item Name,Category,Stall,Eco-Score,Price (Rs.),Stock Quantity,Inventory Value (Rs.),Status\n";
+      
+      filteredItems.forEach(item => {
+        const safeName = item.name.replace(/"/g, '""');
+        const status = item.stockCount <= 5 ? 'Low Stock' : 'In Stock';
+        const value = (item.price * item.stockCount).toFixed(2);
+        
+        const row = [
+          `"${safeName}"`,
+          `"${item.category}"`,
+          `"${item.stallNumber || 'General'}"`,
+          item.ecoScore,
+          item.price,
+          item.stockCount,
+          value,
+          status
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `UniFlow_Inventory_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.dismiss(loadingToast);
+      toast.success('Excel/CSV Report downloaded!');
+    } catch (err) {
+      console.error('Failed to generate CSV report:', err);
+      toast.error('Failed to generate CSV report.');
+    }
+  };
+
+  const generatePDFReport = () => {
+    try {
+      const loadingToast = toast.loading('Generating Professional PDF report...');
+      const doc = new jsPDF();
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      
+      const primaryColor = [245, 158, 11]; // Amber-500
+      const secondaryColor = [254, 243, 199]; // Amber-50
+      const textColor = [31, 41, 55];
+      const lightTextColor = [107, 114, 128];
+      
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      doc.setTextColor(31, 41, 55);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text("UNIFLOW", margin, 20);
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Admin Inventory Report", margin, 28);
+      
+      doc.setFontSize(10);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, 28, { align: 'right' });
+      
+      doc.setTextColor(...textColor);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text("Executive Summary", margin, 55);
+      
+      const boxWidth = (pageWidth - (margin * 2) - 10) / 2;
+      
+      const totalStock = filteredItems.reduce((acc, item) => acc + Number(item.stockCount), 0);
+      const totalValue = filteredItems.reduce((acc, item) => acc + (Number(item.price) * Number(item.stockCount)), 0);
+
+      doc.setFillColor(...secondaryColor);
+      doc.rect(margin, 60, boxWidth, 25, 'F');
+      doc.setFontSize(10);
+      doc.setTextColor(...lightTextColor);
+      doc.text("Estimated Inventory Value", margin + 5, 70);
+      doc.setFontSize(16);
+      doc.setTextColor(217, 119, 6);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Rs. ${totalValue.toFixed(2)}`, margin + 5, 80);
+      
+      doc.setFillColor(...secondaryColor);
+      doc.rect(margin + boxWidth + 10, 60, boxWidth, 25, 'F');
+      doc.setFontSize(10);
+      doc.setTextColor(...lightTextColor);
+      doc.text("Total Items / Stock Units", margin + boxWidth + 15, 70);
+      doc.setFontSize(16);
+      doc.setTextColor(217, 119, 6);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${filteredItems.length} Items / ${totalStock} Units`, margin + boxWidth + 15, 80);
+      
+      let yPos = 100;
+      doc.setFontSize(14);
+      doc.setTextColor(...textColor);
+      doc.text("Detailed Inventory Log", margin, yPos);
+      yPos += 8;
+      
+      const cols = [
+        { title: "Item Name", w: 50, x: margin },
+        { title: "Category", w: 30, x: margin + 50 },
+        { title: "Stall", w: 30, x: margin + 80 },
+        { title: "Price", w: 25, x: margin + 110 },
+        { title: "Stock", w: 20, x: margin + 135 },
+        { title: "Status", w: 27, x: margin + 155 }
+      ];
+      
+      doc.setFillColor(...primaryColor);
+      doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+      doc.setTextColor(31, 41, 55);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      cols.forEach(col => {
+         doc.text(col.title, col.x + 2, yPos + 7);
+      });
+      yPos += 10;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textColor);
+      
+      filteredItems.forEach((item, index) => {
+        const itemName = doc.splitTextToSize(item.name, cols[0].w - 4);
+        const rowHeight = Math.max(12, itemName.length * 5 + 4);
+        
+        if (yPos + rowHeight > pageHeight - margin) {
+            doc.addPage();
+            yPos = margin;
+            
+            doc.setFillColor(...primaryColor);
+            doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            cols.forEach(col => {
+               doc.text(col.title, col.x + 2, yPos + 7);
+            });
+            yPos += 10;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...textColor);
+        }
+        
+        if (index % 2 === 0) {
+            doc.setFillColor(249, 250, 251);
+            doc.rect(margin, yPos, pageWidth - (margin * 2), rowHeight, 'F');
+        }
+        
+        doc.setDrawColor(229, 231, 235);
+        doc.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
+        
+        doc.text(itemName, cols[0].x + 2, yPos + 6);
+        doc.text(item.category, cols[1].x + 2, yPos + 6);
+        doc.text(item.stallNumber || 'General', cols[2].x + 2, yPos + 6);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Rs. ${item.price}`, cols[3].x + 2, yPos + 6);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(item.stockCount), cols[4].x + 2, yPos + 6);
+        
+        if(item.stockCount <= 5) {
+            doc.setTextColor(220, 38, 38);
+            doc.setFont('helvetica', 'bold');
+            doc.text("LOW STOCK", cols[5].x + 2, yPos + 6);
+        } else {
+            doc.setTextColor(5, 150, 105);
+            doc.text("In Stock", cols[5].x + 2, yPos + 6);
+        }
+        doc.setTextColor(...textColor);
+        doc.setFont('helvetica', 'normal');
+        
+        yPos += rowHeight;
+      });
+      
+      const totalPages = doc.internal.getNumberOfPages();
+      for(let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(...lightTextColor);
+          doc.text(`Page ${i} of ${totalPages} - UniFlow Events`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+      }
+
+      doc.save(`Professional_Inventory_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.dismiss(loadingToast);
+      toast.success('Professional PDF Report downloaded!');
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+      toast.error('Failed to generate PDF.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       <Navbar />
       <main className="pt-24 px-4 w-full max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <h1 className="text-3xl font-black text-gray-900">Inventory Management</h1>
-          <button onClick={() => setShowModal(true)} className="bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-3 rounded-xl font-bold shadow-sm transition-colors">
-            + Add New Menu Item
-          </button>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-black text-gray-900">Inventory Management</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={generateCSVReport}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"
+              title="Download Excel/CSV"
+            >
+              <FileSpreadsheet size={20} />
+              CSV
+            </button>
+            <button
+              onClick={generatePDFReport}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 active:scale-95"
+              title="Download PDF"
+            >
+              <FileText size={20} />
+              PDF
+            </button>
+            <button onClick={() => setShowModal(true)} className="bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-3 rounded-xl font-bold shadow-sm transition-colors ml-2">
+              + Add New Menu Item
+            </button>
+          </div>
         </div>
 
         {/* Search and Filters Bar */}
@@ -187,14 +429,7 @@ export function AdminInventoryDashboard() {
                 ) : menuItems.length === 0 ? (
                   <tr><td colSpan="8" className="p-4 text-center text-gray-500">No active menu items found sequentially.</td></tr>
                 ) : (
-                  menuItems
-                    .filter(item => {
-                      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-                      const matchesCategory = categoryFilter === 'All Categories' || item.category === categoryFilter;
-                      const matchesStall = stallFilter === 'All Stalls' || (item.stallNumber && item.stallNumber.includes(stallFilter));
-                      return matchesSearch && matchesCategory && matchesStall;
-                    })
-                    .map((item) => (
+                  filteredItems.map((item) => (
                       <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                         <td className="p-4">
                           {item.image ? (
