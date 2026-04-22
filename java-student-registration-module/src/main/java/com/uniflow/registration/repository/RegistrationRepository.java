@@ -17,6 +17,10 @@ public class RegistrationRepository {
         return registrations.find(and(eq("userId", userId), eq("eventId", eventId))).first() != null;
     }
 
+    public Document findById(String id) {
+        return registrations.find(eq("_id", id)).first();
+    }
+
     public void insert(Registration registration) {
         registrations.insertOne(registration.toDocument());
     }
