@@ -58,7 +58,18 @@ export function OrganizerFeedbackDashboard() {
       .filter(f => f.sentiment === 'Negative')
       .map(f => f.overall?.comment)
       .filter(comment => comment && comment.trim().length > 0)
-    )).slice(0, 3)
+    )).slice(0, 3),
+    topEvent: feedbacks.length > 0
+      ? Object.entries(feedbacks.reduce((acc, f) => {
+          const title = f.event?.title || 'General';
+          if (!acc[title]) acc[title] = { sum: 0, count: 0 };
+          acc[title].sum += (f.overall?.rating || 0);
+          acc[title].count += 1;
+          return acc;
+        }, {}))
+        .map(([title, data]) => ({ title, avg: data.sum / data.count }))
+        .sort((a, b) => b.avg - a.avg)[0]?.title
+      : 'N/A'
   };
 
   const handleDelete = async (id) => {
