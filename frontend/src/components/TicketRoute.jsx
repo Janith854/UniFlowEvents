@@ -18,12 +18,5 @@ export function TicketRoute({ children }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check for ticket logic
-  const ticketId = localStorage.getItem('eventTicketId');
-  if (!ticketId) {
-    // If no ticket, they must register for the event first
-    return <Navigate to="/events" replace />;
-  }
-
   return children;
 }

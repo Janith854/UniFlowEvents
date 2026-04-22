@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   LogOut,
   User,
-  CalendarDays,
   BarChart,
   CheckSquare,
   MessageSquare
@@ -39,7 +38,7 @@ export function Navbar() {
   ];
 
   if (isAuthenticated) {
-    navLinks.push({ href: '/calendar', label: 'Calendar', icon: CalendarDays });
+    navLinks.push({ href: '/feedback', label: 'Feedback', icon: MessageSquare });
     if (role === 'organizer') {
       navLinks.push({ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard });
     }

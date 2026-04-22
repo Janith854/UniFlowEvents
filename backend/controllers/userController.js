@@ -14,6 +14,41 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
+exports.createUser = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ msg: 'Name, email and password are required' });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({ msg: 'Password must be at least 6 characters' });
+        }
+
+        const normalizedEmail = String(email).toLowerCase().trim();
+        const allowedRoles = ['student', 'organizer'];
+        const normalizedRole = role && allowedRoles.includes(role) ? role : 'student';
+
+        const existing = await User.findOne({ email: normalizedEmail });
+        if (existing) {
+            return res.status(400).json({ msg: 'User already exists' });
+        }
+
+        const user = new User({
+            name: String(name).trim(),
+            email: normalizedEmail,
+            password,
+            role: normalizedRole,
+        });
+
+        await user.save();
+        res.status(201).json(sanitizeUser(user));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.getUserById = async (req, res) => {
     try {
         if (!canManageUser(req.user, req.params.id)) {

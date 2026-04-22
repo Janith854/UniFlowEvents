@@ -4,12 +4,15 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export function GlobalSocketListener() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   useEffect(() => {
+    if (!token) return;
+
     // Connect to Backend universally
     const socket = io('http://localhost:5002', {
       withCredentials: true,
+      auth: { token },
     });
 
     socket.on('food-order-status-changed', (order) => {
@@ -32,7 +35,7 @@ export function GlobalSocketListener() {
     return () => {
       socket.disconnect();
     };
-  }, [user]);
+  }, [user, token]);
 
   return <Toaster />;
 }

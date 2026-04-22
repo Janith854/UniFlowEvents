@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { getMenu, addCartLock, removeCartLock, createFoodOrder } from '../services/foodService';
 import { getMe } from '../services/authService';
@@ -31,6 +32,9 @@ export function FoodPage() {
   const [activeVouchers, setActiveVouchers] = useState([]);
   const passRef = useRef();
   const qrRef = useRef();
+  const ticketId = localStorage.getItem('eventTicketId');
+  const eventId = localStorage.getItem('eventId');
+  const hasTicket = Boolean(ticketId);
 
   useEffect(() => {
     localStorage.setItem('uniflow_food_cart', JSON.stringify(cart));
@@ -68,8 +72,11 @@ export function FoodPage() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await getMenu();
-        setMenuItems(res.data);
+        // No pagination on the food page — fetch all items in one go for the menu
+        const res = await getMenu({ limit: 1000 });
+        // Backend now returns { items, total, totalPages, globalStats }
+        const items = res.data?.items ?? res.data;
+        setMenuItems(Array.isArray(items) ? items : []);
       } catch (err) {
         console.error('Failed to fetch menu:', err);
       }
@@ -170,6 +177,11 @@ export function FoodPage() {
   }, [orderStatus]);
 
   const addToCart = async (item) => {
+    if (!hasTicket) {
+      setErrorMessage('Please register for an event before ordering food.');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
     if (item.stockCount <= 0) return;
     const existing = cart.find((i) => i._id === item._id);
     const currentQty = existing ? existing.quantity : 0;
@@ -237,6 +249,10 @@ export function FoodPage() {
   const avgEcoScore = totalItems === 0 ? 0 : Math.round(cart.reduce((sum, item) => sum + item.ecoScore * item.quantity, 0) / totalItems);
 
   const handleCheckout = async () => {
+    if (!hasTicket) {
+      setErrorMessage('Please register for an event before checking out.');
+      return;
+    }
     // ── Frontend guards ──────────────────────────────────────────────────────
     if (cart.length === 0) {
       toast.error('Your cart is empty. Add at least one item before checking out.');
@@ -405,39 +421,57 @@ export function FoodPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map(item => (
-            <div key={item._id} className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-              <div className="mb-4">
-                {item.image && (
-                  <div className="h-48 -mx-4 -mt-4 mb-4 overflow-hidden bg-gray-100 rounded-t-2xl">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+          {items.map(item => {
+            const currentQty = cart.find(c => c._id === item._id)?.quantity || 0;
+            const maxAllowed = Math.min(MAX_QTY_PER_ITEM, item.stockCount);
+            const maxReached = currentQty >= maxAllowed;
+            const isAddDisabled = !hasTicket || item.stockCount === 0 || maxReached;
+            const buttonLabel = !hasTicket
+              ? 'Register for Event'
+              : item.stockCount === 0
+                ? 'Out of Stock'
+                : maxReached
+                  ? 'Max Reached'
+                  : 'Add to Cart';
+
+            return (
+              <div key={item._id} className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+                <div className="mb-4">
+                  {item.image && (
+                    <div className="h-48 -mx-4 -mt-4 mb-4 overflow-hidden bg-gray-100 rounded-t-2xl">
+                      <img 
+                        src={item.image.startsWith('/uploads') ? `http://localhost:5002${item.image}` : item.image} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                      />
+                    </div>
+                  )}
+                  <h3 className="font-bold text-xl text-gray-900">{item.name}</h3>
+                  <p className="text-xs font-bold text-amber-600 mt-1">{item.stallNumber}</p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold">Eco Score: {item.ecoScore}/100</span>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.stockCount > 0 ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
+                      {item.stockCount} in stock
+                    </span>
                   </div>
-                )}
-                <h3 className="font-bold text-xl text-gray-900">{item.name}</h3>
-                <p className="text-xs font-bold text-amber-600 mt-1">{item.stallNumber}</p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-bold">Eco Score: {item.ecoScore}/100</span>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.stockCount > 0 ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
-                    {item.stockCount} in stock
-                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+                  <span className="font-extrabold text-2xl text-amber-500">Rs. {item.price.toFixed(2)}</span>
+                  <button
+                    onClick={() => addToCart(item)}
+                    disabled={isAddDisabled}
+                    className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                      isAddDisabled
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-amber-400 hover:bg-amber-500 text-gray-900'
+                    }`}
+                  >
+                    {buttonLabel}
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                <span className="font-extrabold text-2xl text-amber-500">Rs. {item.price.toFixed(2)}</span>
-                <button
-                  onClick={() => addToCart(item)}
-                   disabled={item.stockCount === 0 || (cart.find(c => c._id === item._id)?.quantity || 0) >= Math.min(MAX_QTY_PER_ITEM, item.stockCount)}
-                  className={`px-4 py-2 rounded-lg font-bold transition-colors ${
-                    item.stockCount === 0 || (cart.find(c => c._id === item._id)?.quantity || 0) >= Math.min(MAX_QTY_PER_ITEM, item.stockCount)
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-amber-400 hover:bg-amber-500 text-gray-900'
-                  }`}
-                >
-                  {item.stockCount === 0 ? 'Out of Stock' : cart.find(c => c._id === item._id)?.quantity >= MAX_QTY_PER_ITEM ? 'Max Reached' : 'Add to Cart'}
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -450,6 +484,16 @@ export function FoodPage() {
         <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
           <div className="lg:w-2/3">
             <h1 className="text-3xl font-black text-gray-900 mb-6">Food Dashboard</h1>
+
+            {!hasTicket && (
+              <div className="mb-6 bg-amber-50 border border-amber-100 text-amber-700 p-4 rounded-2xl font-semibold">
+                You need an event ticket before ordering food.{' '}
+                <Link to="/events" className="underline font-black text-amber-600 hover:text-amber-700">
+                  Browse events
+                </Link>
+                .
+              </div>
+            )}
             
             {hasLoyaltyReward && (
               <div className="mb-8 bg-gradient-to-r from-amber-400 to-orange-500 text-white p-5 rounded-2xl shadow-lg flex items-center gap-4">
@@ -477,6 +521,11 @@ export function FoodPage() {
           <div className="lg:w-1/3">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-24">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Your Cart</h2>
+              {!hasTicket && (
+                <div className="mb-4 bg-amber-50 border border-amber-100 text-amber-700 p-3 rounded-xl text-sm font-semibold">
+                  Register for an event to unlock food ordering.
+                </div>
+              )}
               {cart.length === 0 ? (
                 <p className="text-gray-500 py-4 text-center">Your cart is empty.</p>
               ) : (
@@ -535,7 +584,8 @@ export function FoodPage() {
                   <select 
                     value={pickupSlot} 
                     onChange={(e) => setPickupSlot(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg p-3 font-medium focus:ring-amber-500 focus:border-amber-500 bg-white text-gray-900"
+                    disabled={!hasTicket}
+                    className="w-full border-2 border-gray-200 rounded-lg p-3 font-medium focus:ring-amber-500 focus:border-amber-500 bg-white text-gray-900 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <option value="">Select a time...</option>
                     <option value="12:00 PM">12:00 PM</option>
@@ -558,11 +608,16 @@ export function FoodPage() {
                 
                 <button
                   onClick={handleCheckout}
-                  disabled={cart.length === 0 || orderStatus === 'loading'}
+                  disabled={!hasTicket || cart.length === 0 || orderStatus === 'loading'}
                   className="w-full bg-amber-400 text-zinc-950 font-black py-4 px-4 rounded-xl hover:bg-amber-300 disabled:bg-amber-200 disabled:cursor-not-allowed transition-all shadow-xl shadow-amber-200 active:scale-95 text-xl mt-4"
                 >
                   {orderStatus === 'loading' ? 'Processing...' : 'Complete Checkout'}
                 </button>
+                {!hasTicket && (
+                  <p className="text-xs text-amber-600 font-bold mt-2 text-center">
+                    Register for an event to continue.
+                  </p>
+                )}
                 {total > 0 && total < MIN_ORDER_AMOUNT && (
                   <p className="text-xs text-orange-600 font-bold mt-2 text-center">
                     ⚠️ Minimum order is Rs. {MIN_ORDER_AMOUNT}. Add Rs. {(MIN_ORDER_AMOUNT - total).toFixed(2)} more.

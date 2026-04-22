@@ -62,8 +62,53 @@ exports.removeCartLock = async (req, res) => {
 
 exports.getMenu = async (req, res) => {
     try {
-        const menu = await MenuItem.find();
-        res.json(menu);
+        const { page = 1, limit = 50, search, category, stall, report } = req.query;
+        let query = {};
+
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+        if (category && category !== 'All Categories') {
+            query.category = category;
+        }
+        if (stall && stall !== 'All Stalls') {
+            query.stallNumber = { $regex: stall, $options: 'i' };
+        }
+
+        if (report === 'true') {
+            const allItems = await MenuItem.find(query).sort({ name: 1 });
+            return res.json(allItems);
+        }
+
+        const skip = (page - 1) * limit;
+        const total = await MenuItem.countDocuments(query);
+        const items = await MenuItem.find(query)
+                                    .sort({ name: 1 })
+                                    .skip(skip)
+                                    .limit(Number(limit));
+
+        // Aggregate stats for inventory overview
+        const stats = await MenuItem.aggregate([
+            { $match: query },
+            { $group: {
+                _id: null,
+                totalItems: { $sum: 1 },
+                totalStock: { $sum: "$stockCount" },
+                totalValue: { $sum: { $multiply: ["$price", "$stockCount"] } },
+                lowStockCount: { $sum: { $cond: [{ $lte: ["$stockCount", 5] }, 1, 0] } }
+            }}
+        ]);
+
+        const globalStats = stats.length > 0 ? stats[0] : { totalItems: 0, totalStock: 0, totalValue: 0, lowStockCount: 0 };
+
+        res.json({
+            items,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
+            globalStats
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -71,8 +116,113 @@ exports.getMenu = async (req, res) => {
 
 exports.getFoodOrders = async (req, res) => {
     try {
-        const orders = await FoodOrder.find().populate('user', 'name email').populate('event', 'title');
-        res.json(orders);
+        const { page = 1, limit = 50, dateFilter, startDate, endDate, search, stall, report } = req.query;
+        let query = {};
+
+        // Date Filtering
+        if (dateFilter && dateFilter !== 'All Time') {
+            const now = new Date();
+            let start = new Date();
+            if (dateFilter === 'Today') {
+                start.setHours(0, 0, 0, 0);
+                query.createdAt = { $gte: start };
+            } else if (dateFilter === 'Yesterday') {
+                start.setDate(now.getDate() - 1);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(start);
+                end.setHours(23, 59, 59, 999);
+                query.createdAt = { $gte: start, $lte: end };
+            } else if (dateFilter === 'Last 7 Days') {
+                start.setDate(now.getDate() - 7);
+                start.setHours(0, 0, 0, 0);
+                query.createdAt = { $gte: start };
+            } else if (dateFilter === 'Custom' && startDate) {
+                const sDate = new Date(startDate);
+                sDate.setHours(0, 0, 0, 0);
+                query.createdAt = { $gte: sDate };
+                if (endDate) {
+                    const eDate = new Date(endDate);
+                    eDate.setHours(23, 59, 59, 999);
+                    query.createdAt.$lte = eDate;
+                }
+            }
+        }
+
+        // Search Filter
+        if (search) {
+            query.$or = [
+                { $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: search, options: "i" } } },
+                { ticketId: { $regex: search, $options: 'i' } },
+                { qrString: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Stall Filter
+        if (stall && stall !== 'All Stalls') {
+            query['items.stallNumber'] = { $regex: stall, $options: 'i' };
+        }
+
+        // If report=true, skip pagination and return raw array
+        if (report === 'true') {
+            const allOrders = await FoodOrder.find(query).sort({ createdAt: -1 }).populate('user', 'name email').populate('event', 'title');
+            return res.json(allOrders);
+        }
+
+        const skip = (page - 1) * limit;
+        const total = await FoodOrder.countDocuments(query);
+        const orders = await FoodOrder.find(query)
+                                      .sort({ createdAt: -1 })
+                                      .skip(skip)
+                                      .limit(Number(limit))
+                                      .populate('user', 'name email')
+                                      .populate('event', 'title');
+
+        // Aggregate stats for charts across ALL filtered pages
+        const statsPipeline = [
+            { $match: query },
+            { $unwind: "$items" },
+            { $group: {
+                _id: "$items.stallNumber",
+                revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+            }}
+        ];
+        const stallStats = await FoodOrder.aggregate(statsPipeline);
+        
+        const statusPipeline = [
+            { $match: query },
+            { $group: {
+                _id: "$status",
+                count: { $sum: 1 },
+                totalSales: { $sum: "$totalAmount" }
+            }}
+        ];
+        const statusStats = await FoodOrder.aggregate(statusPipeline);
+        
+        let globalTotalSales = 0;
+        const statusMap = { 'Pending': 0, 'Ready': 0, 'Picked Up': 0 };
+        statusStats.forEach(s => {
+            if(statusMap[s._id] !== undefined) statusMap[s._id] = s.count;
+            globalTotalSales += s.totalSales;
+        });
+
+        const stallDataMap = {};
+        stallStats.forEach(s => {
+            const stallName = s._id || 'General Stall';
+            stallDataMap[stallName] = s.revenue;
+        });
+
+        res.json({
+            orders,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
+            globalStats: {
+                totalSales: globalTotalSales,
+                statusMap,
+                stallDataMap
+            }
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

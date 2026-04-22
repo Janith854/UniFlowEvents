@@ -1,4 +1,8 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Stripe = require('stripe');
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2024-06-20',
+});
 const QRCode = require('qrcode');
 const ParkingReservation = require('../models/ParkingReservation');
 const Event = require('../models/Event');
