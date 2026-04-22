@@ -221,9 +221,9 @@ exports.getFeedbackStats = async (req, res) => {
 
         feedbacks.forEach(f => {
             const allComments = [
-                f.overall?.comment,
-                f.food?.comment,
-                f.parking?.comment
+                f.overall?.comment || '',
+                f.food?.comment || '',
+                f.parking?.comment || ''
             ].join(' ').toLowerCase();
 
             complaintKeywords.forEach(keyword => {
