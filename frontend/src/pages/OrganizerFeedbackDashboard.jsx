@@ -191,15 +191,20 @@ export function OrganizerFeedbackDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-baseline gap-1">
                     <h3 className="text-3xl font-black text-zinc-950">{stats.positivePercentage}%</h3>
-                    <span className="text-green-500 font-bold text-[10px] uppercase tracking-tighter">Positive</span>
+                    <span className="text-green-500 font-bold text-[10px] uppercase tracking-tighter">Pos</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <h3 className="text-lg font-black text-zinc-950/60">{stats.neutralPercentage}%</h3>
+                    <span className="text-amber-500 font-bold text-[10px] uppercase tracking-tighter">Neu</span>
                   </div>
                   <div className="flex items-baseline gap-1 text-right">
                     <h3 className="text-xl font-black text-zinc-950/40">{stats.negativePercentage}%</h3>
-                    <span className="text-red-400 font-bold text-[10px] uppercase tracking-tighter">Negative</span>
+                    <span className="text-red-400 font-bold text-[10px] uppercase tracking-tighter">Neg</span>
                   </div>
                 </div>
                 <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden flex">
                   <div className="bg-green-500 h-full transition-all duration-1000" style={{ width: `${stats.positivePercentage}%` }}></div>
+                  <div className="bg-amber-400 h-full transition-all duration-1000" style={{ width: `${stats.neutralPercentage}%` }}></div>
                   <div className="bg-red-400 h-full transition-all duration-1000" style={{ width: `${stats.negativePercentage}%` }}></div>
                 </div>
               </div>
