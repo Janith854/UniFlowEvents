@@ -31,7 +31,7 @@ export function OrganizerFeedbackDashboard() {
   const applyFilters = () => {
     let result = feedbacks;
     if (filters.rating !== 'All') {
-      result = result.filter(f => f.rating === Number(filters.rating));
+      result = result.filter(f => f.overall?.rating === Number(filters.rating));
     }
     if (filters.sentiment !== 'All') {
       result = result.filter(f => f.sentiment === filters.sentiment);
@@ -134,7 +134,7 @@ export function OrganizerFeedbackDashboard() {
                         <td className="px-8 py-6">
                           <div className="flex items-center justify-center gap-1">
                             <Star size={14} className="text-amber-400 fill-amber-400" />
-                            <span className="font-black text-zinc-950">{f.rating}</span>
+                            <span className="font-black text-zinc-950">{f.overall?.rating ?? '-'}</span>
                           </div>
                         </td>
                         <td className="px-8 py-6">
@@ -149,7 +149,7 @@ export function OrganizerFeedbackDashboard() {
                           </div>
                         </td>
                         <td className="px-8 py-6">
-                          <p className="text-sm text-gray-600 line-clamp-2 max-w-xs">{f.message}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2 max-w-xs">{f.overall?.comment || 'No comment provided.'}</p>
                         </td>
                         <td className="px-8 py-6">
                           <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100 max-w-sm">

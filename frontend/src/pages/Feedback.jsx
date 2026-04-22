@@ -1,34 +1,25 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { createFeedback } from '../services/feedbackService';
 import { getEvents } from '../services/eventService';
 import { useAuth } from '../hooks/useAuth';
+=======
+import { Calendar, MapPin, MessageSquare } from 'lucide-react';
+import { Navbar } from '../components/Navbar';
+import { getEvents } from '../services/eventService';
+import { FeedbackModal } from '../components/FeedbackModal';
+>>>>>>> develop2
 
 export function Feedback() {
-  const { user } = useAuth();
-  const [form, setForm] = useState({ message: '', rating: 5, eventId: '' });
   const [events, setEvents] = useState([]);
-  const [status, setStatus] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({});
-
-  const validateField = (name, value) => {
-    let err = '';
-    if (name === 'message') {
-      if (!value.trim()) err = 'Message is required';
-      else if (value.trim().length < 10) err = 'Feedback message must be at least 10 characters';
-    }
-    if (name === 'rating') {
-      if (Number(value) < 1 || Number(value) > 5) err = 'Rating must be between 1 and 5';
-    }
-    setFieldErrors(prev => ({ ...prev, [name]: err }));
-    return err === '';
-  };
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState('');
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const { data } = await getEvents();
         setEvents(data);
-        if (data.length > 0) setForm(f => ({ ...f, eventId: data[0]._id }));
       } catch (err) {
         console.error('Failed to load events:', err);
       }
@@ -36,41 +27,22 @@ export function Feedback() {
     fetchEvents();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    validateField(name, value);
+  const handleSelectEvent = (eventId) => {
+    setSelectedEventId(eventId);
+    setIsFormOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setStatus('');
-    
-    // Final check
-    const isMsgValid = validateField('message', form.message);
-    const isRatingValid = validateField('rating', form.rating);
-
-    if (!isMsgValid || !isRatingValid) {
-      setStatus('Please fix the errors before submitting.');
-      return;
-    }
-
-    try {
-      await createFeedback({ 
-        message: form.message, 
-        rating: Number(form.rating),
-        eventId: form.eventId
-      });
-      setStatus('Feedback submitted successfully!');
-      setForm(f => ({ ...f, message: '', rating: 5 }));
-      setFieldErrors({});
-    } catch (error) {
-      console.error('Feedback submission error:', error);
-      setStatus('Failed to submit feedback.');
-    }
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
   };
 
+  const now = new Date();
+  const pastEvents = events
+    .filter((event) => new Date(event.date) < now)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const feedbackEvents = pastEvents.length > 0 ? pastEvents : events;
   return (
+<<<<<<< HEAD
     <main className="pt-24 px-4 pb-16">
         <div className="w-full max-w-xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">
@@ -85,68 +57,73 @@ export function Feedback() {
                   : 'bg-red-50 text-red-700 border border-red-100'
               }`}>
                 {status}
+=======
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      <main className="pt-24 px-4 pb-16">
+        <div className="w-full max-w-6xl mx-auto space-y-10">
+          <section>
+            <div className="text-center mb-8">
+              <p className="text-amber-400 font-semibold text-sm uppercase tracking-wider mb-2">Discover Events</p>
+              <h1 className="text-3xl font-black text-gray-900">Past <span className="text-amber-400">Events</span></h1>
+              <p className="text-gray-500 text-sm mt-2">Browse events you have attended and share your experience.</p>
+            </div>
+
+            {feedbackEvents.length === 0 ? (
+              <div className="text-center text-gray-500 text-sm">No past events available yet.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {feedbackEvents.map((event) => (
+                  <div key={event._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                    <div className="relative h-44 overflow-hidden bg-gray-100">
+                      {event.image ? (
+                        <img
+                          src={event.image.startsWith('http') ? event.image : `http://localhost:5002${event.image}`}
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm font-medium">No Image</div>
+                      )}
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-amber-600">
+                        {event.category || 'Event'}
+                      </div>
+                    </div>
+                    <div className="p-5 flex-1 flex flex-col">
+                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
+                      <div className="space-y-1.5 text-sm text-gray-500 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-300" />
+                          {new Date(event.date).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-300" />
+                          {event.location}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectEvent(event._id)}
+                        className="mt-auto w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        Feedback
+                      </button>
+                    </div>
+                  </div>
+                ))}
+>>>>>>> develop2
               </div>
             )}
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Event
-                </label>
-                <select 
-                  name="eventId" 
-                  value={form.eventId} 
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none transition-all"
-                >
-                  {events.length === 0 && <option value="">No events available</option>}
-                  {events.map(ev => (
-                    <option key={ev._id} value={ev._id}>{ev.title}</option>
-                  ))}
-                </select>
-              </div>
+          </section>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rating (1-5)
-                </label>
-                <input 
-                  name="rating" 
-                  type="number" 
-                  min="1" 
-                  max="5" 
-                  value={form.rating} 
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none transition-all ${fieldErrors.rating ? 'border-rose-500 bg-rose-50/10' : 'border-gray-300'}`}
-                />
-                {fieldErrors.rating && <p className="mt-1 text-xs font-bold text-rose-500">{fieldErrors.rating}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message
-                </label>
-                <textarea 
-                  name="message" 
-                  value={form.message} 
-                  onChange={handleChange} 
-                  rows={5}
-                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none transition-all resize-none ${fieldErrors.message ? 'border-rose-500 bg-rose-50/10' : 'border-gray-300'}`}
-                  placeholder="Share your experience..." 
-                />
-                {fieldErrors.message && <p className="mt-1 text-xs font-bold text-rose-500">{fieldErrors.message}</p>}
-              </div>
-
-              <button 
-                type="submit" 
-                className="w-full bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-lg hover:bg-amber-300 transition-colors shadow-[0_4px_14px_0_rgba(251,191,36,0.39)]"
-              >
-                Submit Feedback
-              </button>
-            </form>
-          </div>
         </div>
+        <FeedbackModal
+          isOpen={isFormOpen}
+          onClose={handleCloseForm}
+          events={events}
+          initialEventId={selectedEventId}
+        />
       </main>
     </div>
   );

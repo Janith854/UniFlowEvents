@@ -10,21 +10,29 @@ import {
   MessageSquare } from
 'lucide-react';
 import { RegistrationModal } from './RegistrationModal';
+import { FeedbackModal } from './FeedbackModal';
 import { useAuth } from '../context/AuthContext';
 export function EventDiscovery() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isLoggedIn } = useAuth();
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const handleRegister = (event) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
-  const handleFeedback = () => navigate('/feedback');
+  const handleFeedback = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    setIsFeedbackOpen(true);
+  };
 
   // Mock function to check if registered
   const isRegistered = (eventId) => {
-    return isLoggedIn && (eventId === '1' || eventId === '2');
+    return isAuthenticated && (eventId === '1' || eventId === '2');
   };
   return (
     <section id="events" className="w-full py-24 px-4 bg-gray-50">
@@ -59,7 +67,7 @@ export function EventDiscovery() {
           </p>
         </motion.div>
 
-        {isLoggedIn &&
+        {isAuthenticated &&
         <motion.div
           initial={{
             opacity: 0,
@@ -464,6 +472,11 @@ export function EventDiscovery() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         eventTitle={selectedEvent?.title || ''} />
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
 
     </section>);
 

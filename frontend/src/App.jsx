@@ -101,19 +101,19 @@ export function App() {
           }
         />
         <Route
-          path="/food"
-          element={
-            <TicketRoute>
-              <FoodPage />
-            </TicketRoute>
-          }
-        />
-        <Route
           path="/food/success"
           element={
             <TicketRoute>
               <FoodSuccessPage />
             </TicketRoute>
+          }
+        />
+        <Route
+          path="/food"
+          element={
+            <ProtectedRoute>
+              <FoodPage />
+            </ProtectedRoute>
           }
         />
         <Route

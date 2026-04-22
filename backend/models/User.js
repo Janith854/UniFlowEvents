@@ -11,6 +11,16 @@ const userSchema = new mongoose.Schema({
     resetPasswordExpires: { type: Date },
     eventsAttended: { type: Number, default: 0 },
     activeVouchers: [{ type: String }],
+    inbox: [
+        {
+            type: { type: String, default: 'feedback-reply' },
+            title: { type: String },
+            message: { type: String },
+            event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
+            read: { type: Boolean, default: false },
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
     createdAt: { type: Date, default: Date.now }
 });
 

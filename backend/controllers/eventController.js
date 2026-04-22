@@ -178,13 +178,21 @@ exports.inviteUsers = async (req, res) => {
 exports.analyzeEventFeedback = async (req, res) => {
     try {
         const eventId = req.params.id;
-        const feedbacks = await Feedback.find({ event: eventId });
+        const feedbacks = await Feedback.find({ event: eventId, status: 'submitted' });
         
         if (!feedbacks || feedbacks.length === 0) {
             return res.json({ suggestions: ["Not enough user feedback yet.", "Encourage participants to leave reviews.", "Wait for more data before analysis."] });
         }
 
-        const feedbackMessages = feedbacks.map(f => `Rating: ${f.rating}/5 - ${f.message}`).join("\n");
+        const feedbackMessages = feedbacks
+            .map((f) => {
+                const rating = f.overall?.rating;
+                const comment = f.overall?.comment;
+                if (!rating && !comment) return null;
+                return `Rating: ${rating || 'N/A'}/5 - ${comment || 'No comment'}`;
+            })
+            .filter(Boolean)
+            .join("\n");
         const prompt = `Analyze the following user feedback for an event and provide 3 brief, actionable suggestions for improvement for future events. Format the response as a simple JSON array of 3 strings.\n\nFeedback:\n${feedbackMessages}`;
         
         // Use Gemini API if key is present, otherwise simulate response (since I might not have the key configured or standard package installed)

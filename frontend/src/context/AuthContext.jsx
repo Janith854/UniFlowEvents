@@ -63,9 +63,7 @@ export function AuthProvider({ children }) {
 
   const register = async ({ name, email, password, role }) => {
     const response = await authService.signup({ name, email, password, role });
-    const { token: nextToken, user: nextUser } = response.data;
-    saveSession(nextToken, nextUser);
-    return nextUser;
+    return response.data.user;
   };
 
   const login = async ({ email, password }) => {
@@ -107,6 +105,11 @@ export function AuthProvider({ children }) {
     return response.data;
   };
 
+  const createUser = async (payload) => {
+    const response = await userService.createUser(payload);
+    return response.data;
+  };
+
   const editUser = async (id, payload) => {
     const response = await userService.updateUser(id, payload);
     return response.data;
@@ -139,6 +142,7 @@ export function AuthProvider({ children }) {
         updateProfile,
         updatePassword,
         listUsers,
+        createUser,
         editUser,
         removeUser
       }}
