@@ -67,13 +67,8 @@ const connectDB = async () => {
         const fs = require('fs');
         const { MongoMemoryServer } = require('mongodb-memory-server');
 
-        // Note: Using D: drive based on your previous config. Ensure D: exists or change this path.
-        const dbPath = path.join('D:', 'uniflow_temp_db');
-        if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath, { recursive: true });
-
         const mongoServer = await MongoMemoryServer.create({
             instance: {
-                dbPath: dbPath,
                 storageEngine: 'ephemeralForTest'
             }
         });

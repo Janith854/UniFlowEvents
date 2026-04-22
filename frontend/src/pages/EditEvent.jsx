@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
-import { getEventById, updateEvent } from '../services/eventService';
+import { getEventById, updateEvent, checkOrganizerConflict } from '../services/eventService';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 
@@ -30,6 +30,14 @@ export function EditEvent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [capacityType, setCapacityType] = useState('Limited');
+
+  const [conflictData, setConflictData] = useState(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const hasConfirmedConflict = React.useRef(false);
+
+  useEffect(() => {
+    hasConfirmedConflict.current = false;
+  }, [formData.date]);
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -88,26 +96,35 @@ export function EditEvent() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsSubmitting(true);
 
-    const form = new FormData();
-    form.append('title', formData.title);
-    form.append('organizerName', formData.organizerName);
-    form.append('category', formData.category);
-    form.append('date', formData.date);
-    form.append('registrationDeadline', formData.registrationDeadline);
-    form.append('location', formData.location);
-    form.append('capacity', capacityType === 'Unlimited' ? 'Unlimited' : formData.capacity);
-    form.append('description', formData.description);
-    form.append('ticketing', JSON.stringify({
-      enabled: formData.enableTickets,
-      regularPrice: Number(formData.regularPrice),
-      vipPrice: Number(formData.vipPrice),
-    }));
-    if (newImage) form.append('image', newImage);
-
     try {
+      // 1. Organizer Schedule Conflict Check (Same Day)
+      const { data: conflictRes } = await checkOrganizerConflict(formData.date, id);
+      if (conflictRes.conflict && !hasConfirmedConflict.current) {
+        setConflictData(conflictRes.event);
+        setShowConflictModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const form = new FormData();
+      form.append('title', formData.title);
+      form.append('organizerName', formData.organizerName);
+      form.append('category', formData.category);
+      form.append('date', formData.date);
+      form.append('registrationDeadline', formData.registrationDeadline);
+      form.append('location', formData.location);
+      form.append('capacity', capacityType === 'Unlimited' ? 'Unlimited' : formData.capacity);
+      form.append('description', formData.description);
+      form.append('ticketing', JSON.stringify({
+        enabled: formData.enableTickets,
+        regularPrice: Number(formData.regularPrice),
+        vipPrice: Number(formData.vipPrice),
+      }));
+      if (newImage) form.append('image', newImage);
+
       await updateEvent(id, form);
       toast.success('Event updated successfully!');
       navigate('/events');
@@ -116,6 +133,12 @@ export function EditEvent() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleProceed = () => {
+    setShowConflictModal(false);
+    hasConfirmedConflict.current = true;
+    handleSubmit();
   };
 
   if (isLoading) {
@@ -351,6 +374,62 @@ export function EditEvent() {
           </div>
         </form>
       </div>
+
+      {/* Conflict Modal */}
+      {showConflictModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[32px] shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 transition-all transform scale-100 opacity-100">
+            <div className="p-8 md:p-10">
+              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              </div>
+              
+              <h2 className="text-2xl font-black text-gray-900 mb-4">Scheduling Conflict</h2>
+              <p className="text-gray-600 font-medium mb-6">
+                You already have an event on this date. Are you sure you want to proceed?
+              </p>
+
+              {conflictData && (
+                <div className="bg-gray-50 rounded-2xl p-5 mb-8 border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Conflicting Event Details</p>
+                  <h3 className="font-bold text-gray-900 mb-1">{conflictData.title}</h3>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      {new Date(conflictData.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      {new Date(conflictData.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                      {conflictData.location}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowConflictModal(false)}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-gray-100 text-gray-900 font-bold hover:bg-gray-200 transition-all active:scale-95"
+                >
+                  Cancel Submission
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleProceed}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-amber-400 text-zinc-950 font-black hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/20 active:scale-95"
+                >
+                  Yes, Proceed
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

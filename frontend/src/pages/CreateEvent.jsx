@@ -27,10 +27,10 @@ export function CreateEvent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conflictData, setConflictData] = useState(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
-  const [hasConfirmedConflict, setHasConfirmedConflict] = useState(false);
+  const hasConfirmedConflict = React.useRef(false);
 
   React.useEffect(() => {
-    setHasConfirmedConflict(false);
+    hasConfirmedConflict.current = false;
   }, [formData.date]);
 
   const validateField = (name, value) => {
@@ -113,7 +113,7 @@ export function CreateEvent() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setErrors({});
     setIsSubmitting(true);
 
@@ -148,7 +148,7 @@ export function CreateEvent() {
     try {
       // 1. Organizer Schedule Conflict Check (Same Day)
       const { data: conflictRes } = await checkOrganizerConflict(formData.date);
-      if (conflictRes.conflict && !hasConfirmedConflict) {
+      if (conflictRes.conflict && !hasConfirmedConflict.current) {
         setConflictData(conflictRes.event);
         setShowConflictModal(true);
         setIsSubmitting(false);
@@ -200,11 +200,8 @@ export function CreateEvent() {
 
   const handleProceed = () => {
     setShowConflictModal(false);
-    setHasConfirmedConflict(true);
-    // Use setTimeout to ensure state is updated before re-triggering submit logic
-    setTimeout(() => {
-      document.getElementById('event-form').requestSubmit();
-    }, 0);
+    hasConfirmedConflict.current = true;
+    handleSubmit();
   };
 
   return (
@@ -490,7 +487,7 @@ export function CreateEvent() {
               
               <h2 className="text-2xl font-black text-gray-900 mb-4">Scheduling Conflict</h2>
               <p className="text-gray-600 font-medium mb-6">
-                You already have an event scheduled on this date.
+                You already have an event on this date. Are you sure you want to proceed?
               </p>
 
               {conflictData && (
@@ -513,8 +510,6 @@ export function CreateEvent() {
                   </div>
                 </div>
               )}
-
-              <p className="text-gray-900 font-bold mb-8">Are you sure you want to proceed?</p>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <button 

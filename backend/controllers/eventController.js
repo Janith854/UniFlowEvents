@@ -261,18 +261,24 @@ exports.analyzeEventFeedback = async (req, res) => {
 };
 exports.checkOrganizerConflict = async (req, res) => {
     try {
-        const { date } = req.query;
+        const { date, excludeId } = req.query;
         if (!date) return res.status(400).json({ msg: 'Date is required' });
 
         const searchDate = new Date(date);
         const startOfDay = new Date(searchDate.setHours(0, 0, 0, 0));
         const endOfDay = new Date(searchDate.setHours(23, 59, 59, 999));
 
-        const conflictingEvents = await Event.find({
-            organizer: req.user._id,
+        // Check ALL events on that date (not just the organizer's own events)
+        const query = {
             date: { $gte: startOfDay, $lte: endOfDay },
             status: { $ne: 'Rejected' }
-        });
+        };
+
+        if (excludeId) {
+            query._id = { $ne: excludeId };
+        }
+
+        const conflictingEvents = await Event.find(query);
 
         if (conflictingEvents.length > 0) {
             // Return the first conflict found with details
