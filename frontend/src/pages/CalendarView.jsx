@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
-import startOfWeek from 'date-fns/startOfWeek';
-import getDay from 'date-fns/getDay';
-import enUS from 'date-fns/locale/en-US';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getEvents } from '../services/eventService';
 import {
@@ -13,6 +10,7 @@ import {
   Tag, Search, LayoutGrid, List, Info, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
@@ -33,7 +31,17 @@ const CATEGORY_COLORS = {
 
 const getCatColor = (cat) => CATEGORY_COLORS[cat] || CATEGORY_COLORS.Other;
 
+// Status badge colors for organizer view
+const STATUS_COLORS = {
+  Approved: { bg: '#dcfce7', text: '#15803d' },
+  Pending:  { bg: '#fef9c3', text: '#854d0e' },
+  Rejected: { bg: '#fee2e2', text: '#b91c1c' },
+};
+
 export function CalendarView() {
+  const { role, user } = useAuth();
+  const isOrganizer = role === 'organizer';
+
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -43,24 +51,35 @@ export function CalendarView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarView, setSidebarView] = useState('upcoming'); // 'upcoming' | 'legend'
 
-  useEffect(() => { fetchEvents(); }, []);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const { data } = await getEvents();
-      const mapped = data
-        .filter((e) => e.status === 'Approved')
-        .map((e) => {
-          const startDate = new Date(e.date);
-          const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-          return { ...e, title: e.title, start: startDate, end: endDate };
+      let filtered;
+
+      if (isOrganizer && user?._id) {
+        // Organizers: see ALL their own events (any status)
+        filtered = data.filter((e) => {
+          const organizerId = e.organizer?._id || e.organizer;
+          return organizerId?.toString() === user._id?.toString();
         });
+      } else {
+        // Students / guests: see only Approved events
+        filtered = data.filter((e) => e.status === 'Approved');
+      }
+
+      const mapped = filtered.map((e) => {
+        const startDate = new Date(e.date);
+        const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+        return { ...e, title: e.title, start: startDate, end: endDate };
+      });
       setEvents(mapped);
       setFilteredEvents(mapped);
     } catch (err) {
       console.error('Failed to load events for calendar:', err);
     }
-  };
+  }, [isOrganizer, user]);
+
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   useEffect(() => {
     let result = events;
@@ -71,16 +90,18 @@ export function CalendarView() {
 
   const eventStyleGetter = useCallback((event) => {
     const colors = getCatColor(event.category);
+    const isPending = event.status === 'Pending';
+    const isRejected = event.status === 'Rejected';
     return {
       style: {
-        backgroundColor: colors.bg,
-        border: 'none',
+        backgroundColor: isRejected ? '#f87171' : isPending ? colors.light : colors.bg,
+        border: isPending ? `2px dashed ${colors.bg}` : isRejected ? '2px solid #ef4444' : 'none',
         borderRadius: '6px',
-        color: '#fff',
+        color: isPending ? colors.text : '#fff',
         fontSize: '12px',
         fontWeight: 700,
         padding: '2px 6px',
-        opacity: 0.95,
+        opacity: isRejected ? 0.6 : 0.95,
       }
     };
   }, []);
@@ -116,30 +137,53 @@ export function CalendarView() {
       <div className="pt-24 max-w-[1400px] mx-auto px-4 sm:px-6">
 
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 flex items-center gap-2">
-              <CalendarDays className="text-amber-400" size={30} />
-              Event Calendar
-            </h1>
-            <p className="text-gray-500 mt-1 text-sm">Browse and discover all approved campus events</p>
-          </div>
+        <div className="relative mb-6 overflow-hidden rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 -mr-12 -mt-12 h-48 w-48 rounded-full bg-amber-50/60 opacity-50 blur-2xl" />
+          <div className="absolute bottom-0 left-0 -ml-12 -mb-12 h-48 w-48 rounded-full bg-blue-50/60 opacity-50 blur-2xl" />
 
-          {/* Search */}
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input
-              type="text"
-              placeholder="Search events..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 shadow-sm"
-            />
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-400 shadow-md shadow-amber-200">
+                <CalendarDays className="h-6 w-6 text-white" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-black text-gray-900 tracking-tight">Event Calendar</h1>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
+                    isOrganizer
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    <span className={`mr-1.5 h-1 w-1 rounded-full ${isOrganizer ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                    {isOrganizer ? 'Organizer View' : 'Student View'}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-[13px] font-medium max-w-lg">
+                  {isOrganizer
+                    ? 'Track and manage your submitted events and status updates.'
+                    : 'Discover upcoming campus events, seminars, and workshops.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="relative w-full md:w-72 group">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-4 py-2 text-sm text-gray-900 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-amber-400/10 focus:border-amber-400 transition-all outline-none placeholder:text-gray-400 font-medium"
+              />
+            </div>
           </div>
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex flex-wrap gap-2 mb-5">
+        <div className="flex flex-wrap gap-2 mb-3">
           {allCategories.map(cat => {
             const colors = cat === 'All' ? null : getCatColor(cat);
             const isActive = categoryFilter === cat;
@@ -282,8 +326,11 @@ export function CalendarView() {
                       <p className="text-xs text-gray-400 text-center py-4">No upcoming events</p>
                     ) : upcomingEvents.map(ev => {
                       const c = getCatColor(ev.category);
+                      const sc = STATUS_COLORS[ev.status];
                       return (
-                        <div key={ev._id} className="flex gap-3 p-3 rounded-xl border hover:shadow-sm transition-all cursor-pointer" style={{ borderColor: c.border, backgroundColor: c.light }}>
+                        <div key={ev._id} className="flex gap-3 p-3 rounded-xl border hover:shadow-sm transition-all cursor-pointer" style={{ borderColor: c.border, backgroundColor: c.light }}
+                          onClick={() => setSelectedEvent(ev)}
+                        >
                           <div className="w-1 rounded-full shrink-0" style={{ backgroundColor: c.bg }} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-black text-gray-900 line-clamp-1">{ev.title}</p>
@@ -295,6 +342,11 @@ export function CalendarView() {
                               <MapPin size={10} />
                               {ev.location}
                             </p>
+                            {isOrganizer && ev.status && sc && (
+                              <span className="inline-block mt-1 text-[9px] font-black px-2 py-0.5 rounded-full" style={{ backgroundColor: sc.bg, color: sc.text }}>
+                                {ev.status}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
@@ -365,12 +417,25 @@ export function CalendarView() {
             <div className="p-6">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full mb-2"
-                    style={{ backgroundColor: getCatColor(selectedEvent.category).light, color: getCatColor(selectedEvent.category).text }}
-                  >
-                    <Tag size={10} /> {selectedEvent.category}
-                  </span>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: getCatColor(selectedEvent.category).light, color: getCatColor(selectedEvent.category).text }}
+                    >
+                      <Tag size={10} /> {selectedEvent.category}
+                    </span>
+                    {isOrganizer && selectedEvent.status && (
+                      <span
+                        className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                        style={{
+                          backgroundColor: STATUS_COLORS[selectedEvent.status]?.bg || '#f3f4f6',
+                          color: STATUS_COLORS[selectedEvent.status]?.text || '#374151'
+                        }}
+                      >
+                        {selectedEvent.status}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-xl font-black text-gray-900">{selectedEvent.title}</h3>
                 </div>
                 <button
