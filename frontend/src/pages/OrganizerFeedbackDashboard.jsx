@@ -320,6 +320,10 @@ export function OrganizerFeedbackDashboard() {
                   <div className="bg-red-400 h-full transition-all duration-1000" style={{ width: `${stats.negativePercentage}%` }}></div>
                 </div>
               </div>
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Top Praise</p>
+                <p className="text-[11px] font-black text-green-600 truncate capitalize">"{stats.topPositiveKeyword}"</p>
+              </div>
             </div>
 
             {/* Common Complaints */}
