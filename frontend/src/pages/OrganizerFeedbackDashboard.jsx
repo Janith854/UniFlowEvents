@@ -101,7 +101,13 @@ export function OrganizerFeedbackDashboard() {
         });
       }
       return acc;
-    }, []).slice(-7) : []
+    }, []).slice(-7) : [],
+    foodAvg: feedbacks.filter(f => !f.food?.notApplicable).length > 0
+      ? (feedbacks.filter(f => !f.food?.notApplicable).reduce((acc, f) => acc + (f.food?.rating || 0), 0) / feedbacks.filter(f => !f.food?.notApplicable).length).toFixed(1)
+      : 'N/A',
+    parkingAvg: feedbacks.filter(f => !f.parking?.notApplicable).length > 0
+      ? (feedbacks.filter(f => !f.parking?.notApplicable).reduce((acc, f) => acc + (f.parking?.rating || 0), 0) / feedbacks.filter(f => !f.parking?.notApplicable).length).toFixed(1)
+      : 'N/A'
   };
 
   const handleDelete = async (id) => {
