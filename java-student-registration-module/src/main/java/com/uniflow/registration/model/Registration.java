@@ -1,5 +1,7 @@
 package com.uniflow.registration.model;
 
+import com.uniflow.registration.util.RegistrationStatus;
+
 import org.bson.Document;
 
 import java.time.Instant;
@@ -15,6 +17,7 @@ public class Registration {
     public String year;
     public String ticketType;
     public String paymentStatus;
+    public RegistrationStatus status = RegistrationStatus.PENDING;
 
     public Document toDocument() {
         return new Document("eventId", eventId)
@@ -26,6 +29,7 @@ public class Registration {
             .append("year", year)
             .append("ticketType", ticketType)
             .append("paymentStatus", paymentStatus)
+            .append("status", status.name())
             .append("createdAt", Date.from(Instant.now()));
     }
 }
