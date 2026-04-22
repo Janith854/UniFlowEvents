@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Star } from 'lucide-react';
+import { CheckCircle2, Info, Star } from 'lucide-react';
 import { createFeedback } from '../services/feedbackService';
 import { getEvents } from '../services/eventService';
 import { useAuth } from '../context/AuthContext';
@@ -204,20 +204,36 @@ export function FeedbackModal({ isOpen, onClose, events, initialEventId }) {
           </button>
         </div>
         <div className="p-6">
-          {status && (
-            <div className={`mb-6 p-4 rounded-lg text-sm font-medium ${
-              status.toLowerCase().includes('success') || status.toLowerCase().includes('saved')
-                ? 'bg-green-50 text-green-700 border border-green-100'
-                : 'bg-red-50 text-red-700 border border-red-100'
-            }`}>
-              {status}
-            </div>
-          )}
-          {replyMessage && (
-            <div className="mb-6 p-4 rounded-lg text-sm font-medium bg-amber-50 text-amber-700 border border-amber-100">
-              {replyMessage}
-            </div>
-          )}
+          {status && (() => {
+            const isSuccess = status.toLowerCase().includes('success') || status.toLowerCase().includes('saved');
+            return (
+              <div className={`mb-6 rounded-2xl border px-4 py-4 sm:px-5 ${
+                isSuccess ? 'bg-emerald-50/80 border-emerald-100' : 'bg-rose-50/80 border-rose-100'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl ${
+                    isSuccess ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                  }`}>
+                    {isSuccess ? <CheckCircle2 className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-black ${isSuccess ? 'text-emerald-800' : 'text-rose-700'}`}>
+                      {isSuccess ? 'Feedback received' : 'Submission issue'}
+                    </p>
+                    <p className={`text-sm font-medium ${isSuccess ? 'text-emerald-700' : 'text-rose-600'}`}>
+                      {status}
+                    </p>
+                    {isSuccess && replyMessage && (
+                      <div className="mt-3 rounded-xl border border-amber-100 bg-white/80 p-3">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-amber-500">Organizer reply</p>
+                        <p className="mt-1 text-sm font-medium text-amber-900">{replyMessage}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
