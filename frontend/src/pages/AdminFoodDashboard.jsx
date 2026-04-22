@@ -118,42 +118,55 @@ export function AdminFoodDashboard() {
 
   const generateCSVReport = async () => {
     try {
-      const loadingToast = toast.loading('Generating CSV report...');
+      const loadingToast = toast.loading('Generating Excel-ready CSV...');
       
-      // 1. Generate CSV Data
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "UniFlow - Admin Food Dashboard Real-Time Report\n";
-      csvContent += `Generated At, ${new Date().toLocaleString()}\n\n`;
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Add BOM for Excel UTF-8
       
-      csvContent += "SUMMARY\n";
-      csvContent += `Total Sales (Rs.), ${totalSales.toFixed(2)}\n`;
-      csvContent += `Total Orders, ${filteredOrders.length}\n`;
+      // Main Title
+      csvContent += "UNIFLOW EVENTS - FOOD DASHBOARD REPORT\n";
+      csvContent += `Generated On,${new Date().toLocaleString()}\n\n`;
       
-      csvContent += "\nSTALL REVENUE\n";
+      // Summary
+      csvContent += "EXECUTIVE SUMMARY\n";
+      csvContent += `Total Revenue (Rs.),${totalSales.toFixed(2)}\n`;
+      csvContent += `Total Orders,${filteredOrders.length}\n`;
+      csvContent += `Pending Orders,${statusMap['Pending'] || 0}\n`;
+      csvContent += `Ready Orders,${statusMap['Ready'] || 0}\n`;
+      csvContent += `Picked Up Orders,${statusMap['Picked Up'] || 0}\n\n`;
+      
+      // Stall Revenue
+      csvContent += "STALL REVENUE BREAKDOWN\n";
+      csvContent += "Stall Name,Revenue (Rs.)\n";
       revenueData.forEach(r => {
-         csvContent += `${r.name}, Rs. ${r.value.toFixed(2)}\n`;
+         csvContent += `"${r.name}",${r.value.toFixed(2)}\n`;
       });
+      csvContent += "\n";
       
-      csvContent += "\nORDER DETAILS\n";
-      csvContent += "Order ID,User,Ticket,Items,Stalls,Payment Method,Payment Status,Total Amount (Rs.),Status\n";
+      // Order Details
+      csvContent += "DETAILED ORDER LOG\n";
+      csvContent += "Order ID,Customer Name,Ticket ID,Order Items,Stall Details,Payment Method,Payment Status,Total Amount (Rs.),Fulfillment Status,Pickup Slot\n";
       
       filteredOrders.forEach(order => {
-        const orderId = order._id.substring(order._id.length - 6);
+        const orderId = order._id.substring(order._id.length - 6).toUpperCase();
         const user = order.user?.name || 'Guest';
         const ticket = order.ticketId || 'N/A';
         const items = order.items.map(i => `${i.quantity}x ${i.name}`).join(' | ');
         const stalls = order.items.map(i => i.stallNumber || 'General').join(' | ');
         
+        const safeUser = user.replace(/"/g, '""');
+        const safeItems = items.replace(/"/g, '""');
+        
         const row = [
-          orderId,
-          `"${user}"`,
-          ticket,
-          `"${items}"`,
+          `="${orderId}"`,
+          `"${safeUser}"`,
+          `="${ticket}"`,
+          `"${safeItems}"`,
           `"${stalls}"`,
           order.paymentMethod || 'N/A',
           order.paymentStatus || 'N/A',
           order.totalAmount.toFixed(2),
-          order.status
+          order.status,
+          order.pickupSlot || 'N/A'
         ];
         csvContent += row.join(",") + "\n";
       });
@@ -161,13 +174,13 @@ export function AdminFoodDashboard() {
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Food_Report_${new Date().getTime()}.csv`);
+      link.setAttribute("download", `UniFlow_Food_Report_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
       toast.dismiss(loadingToast);
-      toast.success('CSV Report downloaded successfully!');
+      toast.success('Excel/CSV Report downloaded!');
     } catch (err) {
       console.error('Failed to generate CSV report:', err);
       toast.error('Failed to generate CSV report.');
@@ -176,56 +189,156 @@ export function AdminFoodDashboard() {
 
   const generatePDFReport = () => {
     try {
-      const loadingToast = toast.loading('Generating PDF report...');
+      const loadingToast = toast.loading('Generating Professional PDF report...');
       const doc = new jsPDF();
       
-      doc.setFontSize(18);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      
+      const primaryColor = [79, 70, 229];
+      const secondaryColor = [243, 244, 246];
+      const textColor = [31, 41, 55];
+      const lightTextColor = [107, 114, 128];
+      
+      // Header Background
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      // Header Text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text("UniFlow - Admin Food Dashboard Report", 14, 20);
+      doc.text("UNIFLOW", margin, 20);
       
-      doc.setFontSize(11);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generated At: ${new Date().toLocaleString()}`, 14, 30);
-      doc.text(`Total Sales: Rs. ${totalSales.toFixed(2)}`, 14, 38);
-      doc.text(`Total Orders: ${filteredOrders.length}`, 14, 46);
+      doc.text("Admin Food Dashboard Report", margin, 28);
       
+      doc.setFontSize(10);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, 28, { align: 'right' });
+      
+      // Summary Section
+      doc.setTextColor(...textColor);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text("Stall Revenue Summary:", 14, 58);
-      doc.setFont('helvetica', 'normal');
+      doc.text("Executive Summary", margin, 55);
       
-      let yPos = 66;
-      revenueData.forEach(r => {
-         doc.text(`${r.name}: Rs. ${r.value.toFixed(2)}`, 14, yPos);
-         yPos += 8;
+      // Summary Boxes
+      const boxWidth = (pageWidth - (margin * 2) - 10) / 2;
+      
+      doc.setFillColor(...secondaryColor);
+      doc.rect(margin, 60, boxWidth, 25, 'F');
+      doc.setFontSize(10);
+      doc.setTextColor(...lightTextColor);
+      doc.text("Total Revenue", margin + 5, 70);
+      doc.setFontSize(16);
+      doc.setTextColor(...primaryColor);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Rs. ${totalSales.toFixed(2)}`, margin + 5, 80);
+      
+      doc.setFillColor(...secondaryColor);
+      doc.rect(margin + boxWidth + 10, 60, boxWidth, 25, 'F');
+      doc.setFontSize(10);
+      doc.setTextColor(...lightTextColor);
+      doc.text("Total Orders Fulfilled/Pending", margin + boxWidth + 15, 70);
+      doc.setFontSize(16);
+      doc.setTextColor(...primaryColor);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${filteredOrders.length} Orders`, margin + boxWidth + 15, 80);
+      
+      // Table Header
+      let yPos = 100;
+      doc.setFontSize(14);
+      doc.setTextColor(...textColor);
+      doc.text("Detailed Order Log", margin, yPos);
+      yPos += 8;
+      
+      const cols = [
+        { title: "Order ID", w: 25, x: margin },
+        { title: "Customer / Ticket", w: 45, x: margin + 25 },
+        { title: "Order Items", w: 65, x: margin + 70 },
+        { title: "Total", w: 25, x: margin + 135 },
+        { title: "Status", w: 22, x: margin + 160 }
+      ];
+      
+      doc.setFillColor(...primaryColor);
+      doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      cols.forEach(col => {
+         doc.text(col.title, col.x + 2, yPos + 7);
       });
-
-      yPos += 8;
-      doc.setFont('helvetica', 'bold');
-      doc.text("Order Details:", 14, yPos);
+      yPos += 10;
+      
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      yPos += 8;
-
+      doc.setTextColor(...textColor);
+      
       filteredOrders.forEach((order, index) => {
-        if(yPos > 275) {
-            doc.addPage();
-            yPos = 20;
-        }
-        const orderId = order._id.substring(order._id.length - 6);
+        const orderId = order._id.substring(order._id.length - 6).toUpperCase();
+        const user = order.user?.name || 'Guest';
+        const ticket = order.ticketId || 'N/A';
         const items = order.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
         
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${index + 1}. Order #${orderId} - Rs. ${order.totalAmount.toFixed(2)} [${order.status}]`, 14, yPos);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`    User: ${order.user?.name || 'Guest'} | Ticket: ${order.ticketId || 'N/A'} | Pay: ${order.paymentMethod}`, 14, yPos + 6);
-        doc.text(`    Items: ${items}`, 14, yPos + 12);
+        const itemsLines = doc.splitTextToSize(items, cols[2].w - 4);
+        const rowHeight = Math.max(12, itemsLines.length * 5 + 4);
         
-        yPos += 20;
+        if (yPos + rowHeight > pageHeight - margin) {
+            doc.addPage();
+            yPos = margin;
+            
+            doc.setFillColor(...primaryColor);
+            doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            cols.forEach(col => {
+               doc.text(col.title, col.x + 2, yPos + 7);
+            });
+            yPos += 10;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...textColor);
+        }
+        
+        if (index % 2 === 0) {
+            doc.setFillColor(249, 250, 251);
+            doc.rect(margin, yPos, pageWidth - (margin * 2), rowHeight, 'F');
+        }
+        
+        doc.setDrawColor(229, 231, 235);
+        doc.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
+        
+        doc.text(orderId, cols[0].x + 2, yPos + 6);
+        doc.text(doc.splitTextToSize(`${user}\n(${ticket})`, cols[1].w - 4), cols[1].x + 2, yPos + 5);
+        doc.text(itemsLines, cols[2].x + 2, yPos + 5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Rs. ${order.totalAmount.toFixed(2)}`, cols[3].x + 2, yPos + 6);
+        doc.setFont('helvetica', 'normal');
+        
+        if(order.status === 'Ready') doc.setTextColor(5, 150, 105);
+        else if(order.status === 'Picked Up') doc.setTextColor(107, 114, 128);
+        else doc.setTextColor(217, 119, 6);
+        
+        doc.text(order.status, cols[4].x + 2, yPos + 6);
+        doc.setTextColor(...textColor);
+        
+        yPos += rowHeight;
       });
+      
+      const totalPages = doc.internal.getNumberOfPages();
+      for(let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(...lightTextColor);
+          doc.text(`Page ${i} of ${totalPages} - UniFlow Events`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+      }
 
-      doc.save(`Food_Report_${new Date().getTime()}.pdf`);
+      doc.save(`Professional_Food_Report_${new Date().toISOString().split('T')[0]}.pdf`);
       toast.dismiss(loadingToast);
-      toast.success('PDF Report downloaded successfully!');
+      toast.success('Professional PDF Report downloaded!');
     } catch (err) {
       console.error('Failed to generate PDF:', err);
       toast.error('Failed to generate PDF.');
