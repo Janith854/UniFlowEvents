@@ -18,6 +18,20 @@ const STATUS_ICONS = {
   Rejected: <XCircle className="w-3 h-3" />,
 };
 
+const CATEGORY_STYLES = {
+  Academic:  'bg-blue-50 text-blue-600 border-blue-100',
+  Social:    'bg-purple-50 text-purple-600 border-purple-100',
+  Sports:    'bg-emerald-50 text-emerald-600 border-emerald-100',
+  Workshop:  'bg-amber-50 text-amber-600 border-amber-100',
+  Seminar:   'bg-indigo-50 text-indigo-600 border-indigo-100',
+  Cultural:  'bg-pink-50 text-pink-600 border-pink-100',
+  Career:    'bg-cyan-50 text-cyan-600 border-cyan-100',
+  Tech:      'bg-teal-50 text-teal-600 border-teal-100',
+  Music:     'bg-rose-50 text-rose-600 border-rose-100',
+  Art:       'bg-violet-50 text-violet-600 border-violet-100',
+  Other:     'bg-slate-50 text-slate-600 border-slate-100',
+};
+
 export function Events() {
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -217,7 +231,7 @@ export function Events() {
                     <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm font-medium">No Image</div>
                   )}
                   {/* Category badge */}
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-amber-600">
+                  <div className={`absolute top-3 right-3 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${CATEGORY_STYLES[event.category] || CATEGORY_STYLES.Other}`}>
                     {event.category}
                   </div>
                   {/* Status badge — organizers only */}

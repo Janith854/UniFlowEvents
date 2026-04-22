@@ -26,6 +26,19 @@ export function EventPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Payment Form State (controlled + validated)
+const CATEGORY_STYLES = {
+  Academic:  'bg-blue-500/20 text-blue-200 border-blue-500/30',
+  Social:    'bg-purple-500/20 text-purple-200 border-purple-500/30',
+  Sports:    'bg-emerald-500/20 text-emerald-200 border-emerald-500/30',
+  Workshop:  'bg-amber-400 text-amber-950 border-amber-500/30',
+  Seminar:   'bg-indigo-500/20 text-indigo-200 border-indigo-500/30',
+  Cultural:  'bg-pink-500/20 text-pink-200 border-pink-500/30',
+  Career:    'bg-cyan-500/20 text-cyan-200 border-cyan-500/30',
+  Tech:      'bg-teal-500/20 text-teal-200 border-teal-500/30',
+  Music:     'bg-rose-500/20 text-rose-200 border-rose-500/30',
+  Art:       'bg-violet-500/20 text-violet-200 border-violet-500/30',
+  Other:     'bg-slate-500/20 text-slate-200 border-slate-500/30',
+};
   const [cardDetails, setCardDetails] = useState({ number: '', name: '', expiry: '', cvc: '' });
   const [cardTouched, setCardTouched] = useState({ number: false, name: false, expiry: false, cvc: false });
 
@@ -193,7 +206,7 @@ export function EventPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent"></div>
         
         <div className="absolute bottom-0 left-0 w-full max-w-7xl mx-auto px-4 md:px-8 pb-8">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-xs font-black uppercase tracking-wider mb-4">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-4 border ${CATEGORY_STYLES[event.category] || CATEGORY_STYLES.Other}`}>
             <Tag size={12} /> {event.category}
           </span>
           <h1 className="text-3xl md:text-5xl font-black text-white mb-2 leading-tight">{event.title}</h1>
