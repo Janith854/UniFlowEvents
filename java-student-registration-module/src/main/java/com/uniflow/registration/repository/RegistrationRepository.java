@@ -24,6 +24,13 @@ public class RegistrationRepository {
         return list;
     }
 
+    public List<Document> findAllByEventId(String eventId) {
+        FindIterable<Document> docs = registrations.find(eq("eventId", eventId));
+        List<Document> list = new ArrayList<>();
+        docs.forEach(list::add);
+        return list;
+    }
+
     public boolean existsByUserAndEvent(String userId, String eventId) {
         return registrations.find(and(eq("userId", userId), eq("eventId", eventId))).first() != null;
     }
