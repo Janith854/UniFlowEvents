@@ -139,6 +139,8 @@ export function AdminFoodDashboard() {
       csvContent += `Generated On,${new Date().toLocaleString()}\n\n`;
       
       csvContent += "EXECUTIVE SUMMARY\n";
+      csvContent += `Report Period,${dateFilter === 'Custom' ? `${customStartDate || 'Start'} to ${customEndDate || 'End'}` : dateFilter}\n`;
+      csvContent += `Active Stall Filter,${stallFilter}\n`;
       csvContent += `Total Revenue (Rs.),${totalSales.toFixed(2)}\n`;
       csvContent += `Total Orders,${reportData.length}\n`;
       csvContent += `Pending Orders,${statusMap['Pending'] || 0}\n`;
@@ -226,7 +228,11 @@ export function AdminFoodDashboard() {
       doc.text("Admin Food Dashboard Report", margin, 28);
       
       doc.setFontSize(10);
-      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, 28, { align: 'right' });
+      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, 24, { align: 'right' });
+      const filterText = dateFilter === 'Custom' 
+        ? `Period: ${customStartDate || 'Start'} to ${customEndDate || 'End'}` 
+        : `Period: ${dateFilter}`;
+      doc.text(`${filterText} | Stall: ${stallFilter}`, pageWidth - margin, 32, { align: 'right' });
       
       doc.setTextColor(...textColor);
       doc.setFontSize(14);
