@@ -10,6 +10,7 @@ export function OrganizerFeedbackDashboard() {
   const [filteredFeedbacks, setFilteredFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({ rating: 'All', sentiment: 'All' });
+  const [showCharts, setShowCharts] = useState(true);
 
   useEffect(() => {
     fetchFeedback();
@@ -177,6 +178,16 @@ export function OrganizerFeedbackDashboard() {
               >
                 <Frown size={14} />
                 Show Issues
+              </button>
+
+              <button 
+                onClick={() => setShowCharts(!showCharts)}
+                className={`px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border ${
+                  showCharts ? 'bg-amber-400 text-zinc-950 border-amber-400' : 'bg-white text-gray-500 border-gray-100'
+                }`}
+              >
+                <BarChart size={14} />
+                {showCharts ? 'Hide Analytics' : 'Show Analytics'}
               </button>
 
               <button 
@@ -352,93 +363,95 @@ export function OrganizerFeedbackDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            {/* Rating Distribution Chart */}
-            <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl shadow-gray-200/50">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="text-xl font-black text-zinc-950">Rating Distribution</h3>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Breakdown of star ratings</p>
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
-                    <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
-                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-tighter">Ratings</span>
+          {showCharts && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+              {/* Rating Distribution Chart */}
+              <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl shadow-gray-200/50">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className="text-xl font-black text-zinc-950">Rating Distribution</h3>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Breakdown of star ratings</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                      <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                      <span className="text-[10px] font-black text-amber-600 uppercase tracking-tighter">Ratings</span>
+                    </div>
                   </div>
                 </div>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.ratingData} layout="vertical" margin={{ left: 0, right: 30 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        width={60}
+                        tick={{ fill: '#09090b', fontWeight: 900, fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: '#f8f8f8' }}
+                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
+                      />
+                      <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={24}>
+                        {stats.ratingData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.rating >= 4 ? '#fbbf24' : entry.rating >= 3 ? '#f59e0b' : '#ef4444'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.ratingData} layout="vertical" margin={{ left: 0, right: 30 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                    <XAxis type="number" hide />
-                    <YAxis 
-                      dataKey="name" 
-                      type="category" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      width={60}
-                      tick={{ fill: '#09090b', fontWeight: 900, fontSize: 12 }}
-                    />
-                    <Tooltip 
-                      cursor={{ fill: '#f8f8f8' }}
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
-                    />
-                    <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={24}>
-                      {stats.ratingData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.rating >= 4 ? '#fbbf24' : entry.rating >= 3 ? '#f59e0b' : '#ef4444'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
 
-            {/* Sentiment Trend Chart */}
-            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl shadow-gray-200/50">
-              <div className="mb-8">
-                <h3 className="text-xl font-black text-zinc-950">Sentiment Trend</h3>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Last 7 days activity</p>
-              </div>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats.trendData}>
-                    <defs>
-                      <linearGradient id="colorPos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#a1a1aa', fontWeight: 600, fontSize: 10 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="positive" 
-                      stroke="#22c55e" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorPos)" 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="negative" 
-                      stroke="#ef4444" 
-                      strokeWidth={3}
-                      fill="transparent"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              {/* Sentiment Trend Chart */}
+              <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl shadow-gray-200/50">
+                <div className="mb-8">
+                  <h3 className="text-xl font-black text-zinc-950">Sentiment Trend</h3>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Last 7 days activity</p>
+                </div>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={stats.trendData}>
+                      <defs>
+                        <linearGradient id="colorPos" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#a1a1aa', fontWeight: 600, fontSize: 10 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 800 }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="positive" 
+                        stroke="#22c55e" 
+                        strokeWidth={3}
+                        fillOpacity={1} 
+                        fill="url(#colorPos)" 
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="negative" 
+                        stroke="#ef4444" 
+                        strokeWidth={3}
+                        fill="transparent"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
