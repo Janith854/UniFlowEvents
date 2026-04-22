@@ -35,10 +35,10 @@ export function Events() {
   const fetchEvents = async () => {
     try {
       const { data } = await getEvents();
-      // Organizers see ALL events; students see only Approved
       const visible = isOrganizer ? data : data.filter(e => e.status === 'Approved');
-      setEvents(visible);
-      setFilteredEvents(visible);
+      const sorted = [...visible].sort((a, b) => new Date(a.date) - new Date(b.date));
+      setEvents(sorted);
+      setFilteredEvents(sorted);
     } catch (err) {
       console.error('Failed to load events:', err);
       toast.error('Failed to load events.');

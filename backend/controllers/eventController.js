@@ -6,7 +6,7 @@ const emailService = require('../services/emailService');
 
 exports.getEvents = async (req, res) => {
     try {
-        const events = await Event.find().populate('organizer', 'name email');
+        const events = await Event.find().sort({ date: 1 }).populate('organizer', 'name email');
         res.json(events);
     } catch (err) {
         res.status(500).json({ error: err.message });
