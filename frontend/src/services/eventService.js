@@ -9,3 +9,4 @@ export const generateTicket = (id) => API.post(`/events/${id}/ticket`);
 export const updateEventStatus = (id, status) => API.patch(`/events/${id}/status`, { status });
 export const inviteUsers = (id, emails) => API.post(`/events/${id}/invite`, { emails });
 export const analyzeEventFeedback = (id) => API.get(`/events/${id}/analyze`);
+export const checkOrganizerConflict = (date) => API.get(`/events/check-conflict`, { params: { date } });

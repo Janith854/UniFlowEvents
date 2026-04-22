@@ -9,7 +9,8 @@ const {
     generateTicket,
     updateEventStatus,
     inviteUsers,
-    analyzeEventFeedback
+    analyzeEventFeedback,
+    checkOrganizerConflict
 } = require('../controllers/eventController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
@@ -17,6 +18,7 @@ const { detectConflict } = require('../middleware/conflictMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 router.get('/', getEvents);
+router.get('/check-conflict', protect, authorizeRoles('organizer'), checkOrganizerConflict);
 router.get('/:id', getEventById);
 router.post('/:id/ticket', protect, generateTicket);
 

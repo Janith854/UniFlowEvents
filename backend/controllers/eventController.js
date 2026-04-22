@@ -52,15 +52,8 @@ exports.createEvent = async (req, res) => {
             body.organizer = req.user._id;
         }
 
-        // Prevent overlapping events for the same organizer
-        const existingEvent = await Event.findOne({
-            organizer: body.organizer,
-            date: body.date
-        });
-
-        if (existingEvent) {
-            return res.status(400).json({ msg: 'You already have an event scheduled for this date and time.' });
-        }
+        // Strict block removed to allow organizer override after confirmation. 
+        // Venue conflicts are still handled by detectConflict middleware.
 
         const newEvent = new Event(body);
         const event = await newEvent.save();
@@ -101,17 +94,7 @@ exports.updateEvent = async (req, res) => {
             delete body.registrationDeadline;
         }
 
-        // Prevent overlapping events for the same organizer (excluding the current event)
-        if (body.date) {
-            const conflict = await Event.findOne({
-                organizer: req.user._id,
-                date: body.date,
-                _id: { $ne: req.params.id }
-            });
-            if (conflict) {
-                return res.status(400).json({ msg: 'You already have another event scheduled for this date and time.' });
-            }
-        }
+        // Strict block removed to allow organizer override after confirmation.
 
         const updatedEvent = await Event.findByIdAndUpdate(req.params.id, body, { new: true });
         res.json(updatedEvent);
@@ -264,6 +247,39 @@ exports.analyzeEventFeedback = async (req, res) => {
         }
 
         res.json({ suggestions });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+exports.checkOrganizerConflict = async (req, res) => {
+    try {
+        const { date } = req.query;
+        if (!date) return res.status(400).json({ msg: 'Date is required' });
+
+        const searchDate = new Date(date);
+        const startOfDay = new Date(searchDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(searchDate.setHours(23, 59, 59, 999));
+
+        const conflictingEvents = await Event.find({
+            organizer: req.user._id,
+            date: { $gte: startOfDay, $lte: endOfDay },
+            status: { $ne: 'Rejected' }
+        });
+
+        if (conflictingEvents.length > 0) {
+            // Return the first conflict found with details
+            const conflict = conflictingEvents[0];
+            return res.json({ 
+                conflict: true, 
+                event: {
+                    title: conflict.title,
+                    date: conflict.date,
+                    location: conflict.location
+                }
+            });
+        }
+
+        res.json({ conflict: false });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
