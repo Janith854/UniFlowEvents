@@ -30,6 +30,16 @@ const startServer = async () => {
         // Make io accessible in your routes via req.app.get('io')
         app.set('io', io);
 
+        // Basic Socket Authentication Middleware
+        io.use((socket, next) => {
+            const token = socket.handshake.auth?.token;
+            if (!token) {
+                console.warn('⚠️ Rejected unauthenticated socket connection');
+                return next(new Error('Authentication error: Token required'));
+            }
+            next();
+        });
+
         io.on('connection', (socket) => {
             console.log('🔗 WebSocket Client connected:', socket.id);
             socket.on('disconnect', () => {

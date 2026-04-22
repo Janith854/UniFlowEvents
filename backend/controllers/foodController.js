@@ -65,8 +65,106 @@ exports.getMenu = async (req, res) => {
 
 exports.getFoodOrders = async (req, res) => {
     try {
-        const orders = await FoodOrder.find().populate('user', 'name email').populate('event', 'title');
-        res.json(orders);
+        const { page = 1, limit = 50, dateFilter, search, stall, report } = req.query;
+        let query = {};
+
+        // Date Filtering
+        if (dateFilter && dateFilter !== 'All Time') {
+            const now = new Date();
+            let startDate = new Date();
+            if (dateFilter === 'Today') {
+                startDate.setHours(0, 0, 0, 0);
+            } else if (dateFilter === 'Yesterday') {
+                startDate.setDate(now.getDate() - 1);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(startDate);
+                endDate.setHours(23, 59, 59, 999);
+                query.createdAt = { $gte: startDate, $lte: endDate };
+            } else if (dateFilter === 'Last 7 Days') {
+                startDate.setDate(now.getDate() - 7);
+                startDate.setHours(0, 0, 0, 0);
+            }
+            
+            if (dateFilter !== 'Yesterday') {
+                query.createdAt = { $gte: startDate };
+            }
+        }
+
+        // Search Filter
+        if (search) {
+            query.$or = [
+                { $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: search, options: "i" } } },
+                { ticketId: { $regex: search, $options: 'i' } },
+                { qrString: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Stall Filter
+        if (stall && stall !== 'All Stalls') {
+            query['items.stallNumber'] = { $regex: stall, $options: 'i' };
+        }
+
+        // If report=true, skip pagination and return raw array
+        if (report === 'true') {
+            const allOrders = await FoodOrder.find(query).sort({ createdAt: -1 }).populate('user', 'name email').populate('event', 'title');
+            return res.json(allOrders);
+        }
+
+        const skip = (page - 1) * limit;
+        const total = await FoodOrder.countDocuments(query);
+        const orders = await FoodOrder.find(query)
+                                      .sort({ createdAt: -1 })
+                                      .skip(skip)
+                                      .limit(Number(limit))
+                                      .populate('user', 'name email')
+                                      .populate('event', 'title');
+
+        // Aggregate stats for charts across ALL filtered pages
+        const statsPipeline = [
+            { $match: query },
+            { $unwind: "$items" },
+            { $group: {
+                _id: "$items.stallNumber",
+                revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+            }}
+        ];
+        const stallStats = await FoodOrder.aggregate(statsPipeline);
+        
+        const statusPipeline = [
+            { $match: query },
+            { $group: {
+                _id: "$status",
+                count: { $sum: 1 },
+                totalSales: { $sum: "$totalAmount" }
+            }}
+        ];
+        const statusStats = await FoodOrder.aggregate(statusPipeline);
+        
+        let globalTotalSales = 0;
+        const statusMap = { 'Pending': 0, 'Ready': 0, 'Picked Up': 0 };
+        statusStats.forEach(s => {
+            if(statusMap[s._id] !== undefined) statusMap[s._id] = s.count;
+            globalTotalSales += s.totalSales;
+        });
+
+        const stallDataMap = {};
+        stallStats.forEach(s => {
+            const stallName = s._id || 'General Stall';
+            stallDataMap[stallName] = s.revenue;
+        });
+
+        res.json({
+            orders,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
+            globalStats: {
+                totalSales: globalTotalSales,
+                statusMap,
+                stallDataMap
+            }
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

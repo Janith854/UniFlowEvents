@@ -4,9 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getFoodOrders, updateFoodOrder } from '../services/foodService';
 import toast from 'react-hot-toast';
-import { Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { FileSpreadsheet, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import io from 'socket.io-client';
 
 export function AdminFoodDashboard() {
@@ -14,17 +13,38 @@ export function AdminFoodDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Pagination & Filtering State
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 50;
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('All Time');
   const [stallFilter, setStallFilter] = useState('All Stalls');
+  const [globalStats, setGlobalStats] = useState({ totalSales: 0, statusMap: {}, stallDataMap: {} });
 
+  // Reset page when filters change
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    setPage(1);
+  }, [searchQuery, stallFilter, dateFilter]);
+
+  // Fetch with Debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchOrders();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, stallFilter, dateFilter, page]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await getFoodOrders();
-      setOrders(Array.isArray(res.data) ? res.data : []);
+      const params = { page, limit, dateFilter, search: searchQuery, stall: stallFilter };
+      const res = await getFoodOrders(params);
+      setOrders(res.data.orders || []);
+      setTotalPages(res.data.totalPages || 1);
+      if (res.data.globalStats) setGlobalStats(res.data.globalStats);
       setError('');
     } catch (err) {
       console.error('Food orders fetch error:', err);
@@ -39,9 +59,8 @@ export function AdminFoodDashboard() {
   };
 
   useEffect(() => {
-    // Setup Socket connection
     const socketURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002';
-    const socket = io(socketURL, { path: '/socket.io' });
+    const socket = io(socketURL, { path: '/socket.io', auth: { token } });
 
     socket.on('connect', () => {
       console.log('AdminFoodDashboard connected to socket:', socket.id);
@@ -57,24 +76,15 @@ export function AdminFoodDashboard() {
       toast.success(`Order ${updatedOrder._id.substring(updatedOrder._id.length - 6)} payment confirmed!`);
     });
 
-    // Also listen to new orders
-    // Actually, createFoodOrder doesn't emit an event currently, but we can just poll or rely on status updates.
-    // For now, updating status and payments is real-time.
-
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [token]);
 
-  const handleStatusToggle = async (orderId, currentStatus) => {
-    const nextStatus = currentStatus === 'Pending' ? 'Ready' 
-                     : currentStatus === 'Ready' ? 'Picked Up' 
-                     : 'Pending';
+  const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await updateFoodOrder(orderId, { status: nextStatus });
-      // We don't strictly need to fetchOrders because socket will emit 'food-order-status-changed' and update it,
-      // but we can optimistic update or just let socket handle it. Let's let socket handle it, but also do it here for instant feedback.
-      setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: nextStatus } : o));
+      await updateFoodOrder(orderId, { status: newStatus });
+      setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
       toast.success('Status updated successfully');
     } catch (err) {
       console.error('Failed to update status', err);
@@ -82,59 +92,42 @@ export function AdminFoodDashboard() {
     }
   };
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredOrders = orders.filter(o => {
-    // Stall filter
-    const matchesStall = stallFilter === 'All Stalls' || o.items.some(i => (i.stallNumber || '').includes(stallFilter));
-    // Search filter
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = !searchQuery || 
-      o._id.toLowerCase().includes(searchLower) || 
-      (o.ticketId && o.ticketId.toLowerCase().includes(searchLower)) ||
-      (o.qrString && o.qrString.toLowerCase().includes(searchLower));
-      
-    return matchesStall && matchesSearch;
-  });
-
-  const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-  const stallDataMap = {};
-  filteredOrders.forEach(order => {
-     order.items.forEach(item => {
-        const stall = item.stallNumber || 'General Stall';
-        if (!stallDataMap[stall]) stallDataMap[stall] = 0;
-        stallDataMap[stall] += (item.price * item.quantity);
-     });
-  });
+  const totalSales = globalStats.totalSales || 0;
+  const stallDataMap = globalStats.stallDataMap || {};
+  const statusMap = globalStats.statusMap || { 'Pending': 0, 'Ready': 0, 'Picked Up': 0 };
+  
   const revenueData = Object.keys(stallDataMap).map(key => ({ name: key, value: stallDataMap[key] }));
   const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444'];
-
-  const statusMap = { 'Pending': 0, 'Ready': 0, 'Picked Up': 0 };
-  filteredOrders.forEach(order => {
-      if (statusMap[order.status] !== undefined) statusMap[order.status]++;
-  });
   const statusData = Object.keys(statusMap).map(key => ({ name: key, count: statusMap[key] }));
 
+  const fetchFullReportData = async () => {
+    try {
+       const res = await getFoodOrders({ dateFilter, search: searchQuery, stall: stallFilter, report: true });
+       return res.data;
+    } catch (e) { 
+       toast.error("Failed to fetch full data for report.");
+       return null; 
+    }
+  };
+
   const generateCSVReport = async () => {
+    const reportData = await fetchFullReportData();
+    if (!reportData) return;
+
     try {
       const loadingToast = toast.loading('Generating Excel-ready CSV...');
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
       
-      let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Add BOM for Excel UTF-8
-      
-      // Main Title
       csvContent += "UNIFLOW EVENTS - FOOD DASHBOARD REPORT\n";
       csvContent += `Generated On,${new Date().toLocaleString()}\n\n`;
       
-      // Summary
       csvContent += "EXECUTIVE SUMMARY\n";
       csvContent += `Total Revenue (Rs.),${totalSales.toFixed(2)}\n`;
-      csvContent += `Total Orders,${filteredOrders.length}\n`;
+      csvContent += `Total Orders,${reportData.length}\n`;
       csvContent += `Pending Orders,${statusMap['Pending'] || 0}\n`;
       csvContent += `Ready Orders,${statusMap['Ready'] || 0}\n`;
       csvContent += `Picked Up Orders,${statusMap['Picked Up'] || 0}\n\n`;
       
-      // Stall Revenue
       csvContent += "STALL REVENUE BREAKDOWN\n";
       csvContent += "Stall Name,Revenue (Rs.)\n";
       revenueData.forEach(r => {
@@ -142,11 +135,10 @@ export function AdminFoodDashboard() {
       });
       csvContent += "\n";
       
-      // Order Details
       csvContent += "DETAILED ORDER LOG\n";
       csvContent += "Order ID,Customer Name,Ticket ID,Order Items,Stall Details,Payment Method,Payment Status,Total Amount (Rs.),Fulfillment Status,Pickup Slot\n";
       
-      filteredOrders.forEach(order => {
+      reportData.forEach(order => {
         const orderId = order._id.substring(order._id.length - 6).toUpperCase();
         const user = order.user?.name || 'Guest';
         const ticket = order.ticketId || 'N/A';
@@ -187,7 +179,10 @@ export function AdminFoodDashboard() {
     }
   };
 
-  const generatePDFReport = () => {
+  const generatePDFReport = async () => {
+    const reportData = await fetchFullReportData();
+    if (!reportData) return;
+
     try {
       const loadingToast = toast.loading('Generating Professional PDF report...');
       const doc = new jsPDF();
@@ -201,11 +196,9 @@ export function AdminFoodDashboard() {
       const textColor = [31, 41, 55];
       const lightTextColor = [107, 114, 128];
       
-      // Header Background
       doc.setFillColor(...primaryColor);
       doc.rect(0, 0, pageWidth, 40, 'F');
       
-      // Header Text
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
@@ -218,13 +211,11 @@ export function AdminFoodDashboard() {
       doc.setFontSize(10);
       doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, 28, { align: 'right' });
       
-      // Summary Section
       doc.setTextColor(...textColor);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.text("Executive Summary", margin, 55);
       
-      // Summary Boxes
       const boxWidth = (pageWidth - (margin * 2) - 10) / 2;
       
       doc.setFillColor(...secondaryColor);
@@ -245,9 +236,8 @@ export function AdminFoodDashboard() {
       doc.setFontSize(16);
       doc.setTextColor(...primaryColor);
       doc.setFont('helvetica', 'bold');
-      doc.text(`${filteredOrders.length} Orders`, margin + boxWidth + 15, 80);
+      doc.text(`${reportData.length} Orders`, margin + boxWidth + 15, 80);
       
-      // Table Header
       let yPos = 100;
       doc.setFontSize(14);
       doc.setTextColor(...textColor);
@@ -276,7 +266,7 @@ export function AdminFoodDashboard() {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...textColor);
       
-      filteredOrders.forEach((order, index) => {
+      reportData.forEach((order, index) => {
         const orderId = order._id.substring(order._id.length - 6).toUpperCase();
         const user = order.user?.name || 'Guest';
         const ticket = order.ticketId || 'N/A';
@@ -328,12 +318,12 @@ export function AdminFoodDashboard() {
         yPos += rowHeight;
       });
       
-      const totalPages = doc.internal.getNumberOfPages();
-      for(let i = 1; i <= totalPages; i++) {
+      const totalPagesReport = doc.internal.getNumberOfPages();
+      for(let i = 1; i <= totalPagesReport; i++) {
           doc.setPage(i);
           doc.setFontSize(8);
           doc.setTextColor(...lightTextColor);
-          doc.text(`Page ${i} of ${totalPages} - UniFlow Events`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+          doc.text(`Page ${i} of ${totalPagesReport} - UniFlow Events`, pageWidth / 2, pageHeight - 8, { align: 'center' });
       }
 
       doc.save(`Professional_Food_Report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -360,6 +350,16 @@ export function AdminFoodDashboard() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 w-64 shadow-sm"
               />
+              <select 
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+              >
+                <option value="All Time">All Time</option>
+                <option value="Today">Today</option>
+                <option value="Yesterday">Yesterday</option>
+                <option value="Last 7 Days">Last 7 Days</option>
+              </select>
               <select 
                 value={stallFilter}
                 onChange={(e) => setStallFilter(e.target.value)}
@@ -428,7 +428,7 @@ export function AdminFoodDashboard() {
 
           {error && <p className="text-red-500 bg-red-50 p-4 rounded-xl mb-4 font-bold border border-red-100">{error}</p>}
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -444,11 +444,11 @@ export function AdminFoodDashboard() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">Loading orders...</td></tr>
+                    <tr><td colSpan="7" className="p-4 text-center text-gray-500">Loading orders...</td></tr>
                   ) : orders.length === 0 ? (
-                    <tr><td colSpan="6" className="p-4 text-center text-gray-500">No orders found.</td></tr>
+                    <tr><td colSpan="7" className="p-4 text-center text-gray-500">No orders found.</td></tr>
                   ) : (
-                    filteredOrders.map((order) => (
+                    orders.map((order) => (
                       <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="p-4">
                           <p className="font-mono text-xs text-gray-500">{order._id.substring(order._id.length - 6)}</p>
@@ -494,19 +494,20 @@ export function AdminFoodDashboard() {
                         </td>
                         <td className="p-4 font-black text-gray-900 text-right">Rs. {order.totalAmount.toFixed(2)}</td>
                         <td className="p-4 font-bold text-gray-700 text-center">{order.pickupSlot}</td>
-                        <td className="p-4 text-center">
-                          <button
-                            onClick={() => handleStatusToggle(order._id, order.status)}
-                            className={`px-4 py-2 w-28 rounded-xl font-black text-xs transition-all shadow-md active:scale-95 border ${
-                              order.status === 'Ready' ? 'bg-green-400 text-white border-green-500/20 hover:bg-green-500' :
-                              order.status === 'Picked Up' ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed shadow-none' :
-                              'bg-amber-400 text-zinc-950 border-amber-500/20 hover:bg-amber-300'
+                        <td className="p-4 text-center flex flex-col items-center">
+                          <select
+                            value={order.status}
+                            onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                            className={`px-3 py-2 w-32 rounded-xl font-black text-xs outline-none cursor-pointer border shadow-sm transition-all text-center ${
+                              order.status === 'Ready' ? 'bg-green-400 text-white border-green-500/20' :
+                              order.status === 'Picked Up' ? 'bg-gray-200 text-gray-700 border-gray-300' :
+                              'bg-amber-400 text-zinc-950 border-amber-500/20'
                             }`}
-                            disabled={order.status === 'Picked Up'}
                           >
-                            {order.status}
-                          </button>
-                          {order.status !== 'Picked Up' && <p className="text-[10px] text-gray-400 mt-1">Click to toggle</p>}
+                            <option value="Pending">Pending</option>
+                            <option value="Ready">Ready</option>
+                            <option value="Picked Up">Picked Up</option>
+                          </select>
                         </td>
                       </tr>
                     ))
@@ -515,6 +516,30 @@ export function AdminFoodDashboard() {
               </table>
             </div>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-6">
+              <button 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm font-bold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all"
+              >
+                <ChevronLeft size={16} /> Prev
+              </button>
+              <span className="font-bold text-gray-600 text-sm">
+                Page <span className="text-amber-600">{page}</span> of {totalPages}
+              </span>
+              <button 
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm font-bold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all"
+              >
+                Next <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+
         </div>
       </main>
     </div>
