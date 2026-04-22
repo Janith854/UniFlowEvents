@@ -3,6 +3,7 @@ import * as feedbackService from '../services/feedbackService';
 import { MessageSquare, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
 
 export function OrganizerFeedbackDashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -78,7 +79,29 @@ export function OrganizerFeedbackDashboard() {
         }, {}))
         .map(([title, count]) => ({ title, count }))
         .sort((a, b) => b.count - a.count)
-      : []
+      : [],
+    ratingData: [5, 4, 3, 2, 1].map(rating => ({
+      name: `${rating} ★`,
+      count: feedbacks.filter(f => f.overall?.rating === rating).length,
+      rating
+    })),
+    trendData: feedbacks.length > 0 ? feedbacks.slice().reverse().reduce((acc, f) => {
+      const date = new Date(f.createdAt).toLocaleDateString();
+      const existing = acc.find(d => d.date === date);
+      if (existing) {
+        if (f.sentiment === 'Positive') existing.positive += 1;
+        if (f.sentiment === 'Negative') existing.negative += 1;
+        existing.total += 1;
+      } else {
+        acc.push({
+          date,
+          positive: f.sentiment === 'Positive' ? 1 : 0,
+          negative: f.sentiment === 'Negative' ? 1 : 0,
+          total: 1
+        });
+      }
+      return acc;
+    }, []).slice(-7) : []
   };
 
   const handleDelete = async (id) => {
