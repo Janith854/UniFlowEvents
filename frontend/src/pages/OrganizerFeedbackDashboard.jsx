@@ -304,6 +304,17 @@ export function OrganizerFeedbackDashboard() {
                         <td className="px-8 py-6">
                           <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100 max-w-sm">
                             <p className="text-[11px] italic text-zinc-700 leading-relaxed font-medium">"{f.aiSuggestedReply || 'Generating response...'}"</p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {['Thanks!', 'Good job', 'Understood'].map(text => (
+                                <button 
+                                  key={text}
+                                  onClick={() => toast.success(`Reply sent: ${text}`)}
+                                  className="text-[9px] font-bold px-2 py-0.5 bg-white border border-amber-200 rounded-md text-amber-600 hover:bg-amber-100 transition-colors"
+                                >
+                                  {text}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </td>
                         <td className="px-8 py-6">
