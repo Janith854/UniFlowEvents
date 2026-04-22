@@ -2,28 +2,10 @@ const mongoose = require('mongoose');
 const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
 const Event = require('../models/Event');
-const Feedback = require('../models/Feedback');
 
-// ── Background Seeder (non-blocking) ───────────────────────────────────────
-// Runs AFTER the server is already listening — zero startup delay
 const seedDatabase = async () => {
     try {
-        // Cleanup legacy feedback index
-        try {
-            const indexes = await Feedback.collection.indexes();
-            const legacyIndex = indexes.find(
-                (idx) => idx.name === 'userId_1_eventId_1' || (idx.key?.userId === 1 && idx.key?.eventId === 1)
-            );
-            if (legacyIndex) {
-                await Feedback.collection.dropIndex(legacyIndex.name);
-                console.log(`Dropped legacy feedback index: ${legacyIndex.name}`);
-            }
-        } catch (err) {
-            if (err.codeName !== 'NamespaceNotFound') {
-                console.warn('Feedback index cleanup skipped:', err.message);
-            }
-        }
-
+        // Seed database
         const count = await MenuItem.countDocuments();
         if (count === 0) {
             await MenuItem.insertMany([
@@ -76,19 +58,32 @@ const seedDatabase = async () => {
 
 // ── Main DB Connect ─────────────────────────────────────────────────────────
 const connectDB = async () => {
-    const uri = process.env.MONGO_URI;
+    let uri = process.env.MONGO_URI;
 
-    if (!uri) {
-        throw new Error('MONGO_URI is not set in .env. Please add your MongoDB Atlas connection string.');
+    if (!uri || uri.includes('127.0.0.1') || uri.includes('localhost')) {
+        console.log('No MongoDB Atlas URI found or using local/localhost. Defaulting to in-memory/temporary database.');
+
+        const path = require('path');
+        const fs = require('fs');
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+
+        const mongoServer = await MongoMemoryServer.create({
+            instance: {
+                storageEngine: 'ephemeralForTest'
+            }
+        });
+        uri = mongoServer.getUri();
+        console.log('Using in-memory MongoDB (D: drive):', uri);
+    } else {
+        console.log('🔌 Connecting to MongoDB Atlas...');
     }
 
-    console.log('🔌 Connecting to MongoDB Atlas...');
     await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 8000,
         connectTimeoutMS: 10000,
     });
 
-    console.log('🍃 MongoDB Atlas connected successfully');
+    console.log('🍃 MongoDB connected successfully');
 
     // Run seeding in background — server is ready IMMEDIATELY
     setImmediate(() => seedDatabase());
