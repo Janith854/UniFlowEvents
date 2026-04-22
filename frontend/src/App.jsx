@@ -115,6 +115,14 @@ export function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/parking/reservation"
+          element={
+            <ProtectedRoute>
+              <ParkingReservation />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/parking/success" element={<DigitalPass />} />
         <Route
           path="/admin/food"
