@@ -308,6 +308,10 @@ export function OrganizerFeedbackDashboard() {
                   )}
                 </div>
               </div>
+              <div className="mt-4 pt-4 border-t border-gray-50 mb-4">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Highest Issue Volume</p>
+                <p className="text-[11px] font-black text-red-600 truncate">{stats.topComplainedEvent}</p>
+              </div>
               <div className="space-y-2">
                 {stats.complaints.length > 0 ? stats.complaints.map((c, i) => (
                   <p key={i} className="text-[10px] font-bold text-gray-600 line-clamp-1 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
