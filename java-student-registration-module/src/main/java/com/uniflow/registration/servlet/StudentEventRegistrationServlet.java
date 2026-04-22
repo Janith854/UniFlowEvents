@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -20,6 +22,7 @@ import java.util.Date;
 
 @WebServlet("/student/register-event")
 public class StudentEventRegistrationServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(StudentEventRegistrationServlet.class);
     private final EventRepository eventRepository = new EventRepository();
     private final RegistrationRepository registrationRepository = new RegistrationRepository();
     private final TicketRepository ticketRepository = new TicketRepository();
@@ -51,6 +54,7 @@ public class StudentEventRegistrationServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String eventId = req.getParameter("eventId");
         String userId = req.getParameter("userId");
+        logger.info("Processing registration request for userId: {} and eventId: {}", userId, eventId);
 
         Document event = eventRepository.findById(eventId);
         if (event == null) {
@@ -141,6 +145,7 @@ public class StudentEventRegistrationServlet extends HttpServlet {
         }
 
         ticketRepository.insert(ticket);
+        logger.info("Successfully registered user {} for event {}. Ticket ID: {}", userId, eventId, ticket.ticketId);
 
         req.setAttribute("success", "Registration successful.");
         req.setAttribute("ticket", ticket);
