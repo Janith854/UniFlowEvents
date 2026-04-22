@@ -93,7 +93,11 @@ export function OrganizerFeedbackDashboard() {
                 <MessageSquare className="text-amber-400" size={32} />
                 Feedback Dashboard
               </h1>
-              <p className="text-gray-500 font-medium">Manage student experiences and AI-driven insights</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-gray-500 font-medium">Manage student experiences and AI-driven insights</p>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last updated: {new Date().toLocaleTimeString()}</p>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
