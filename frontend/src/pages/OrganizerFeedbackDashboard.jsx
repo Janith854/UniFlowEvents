@@ -262,7 +262,14 @@ export function OrganizerFeedbackDashboard() {
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Sentiment</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Feedback Message</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">AI Suggested Reply</th>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                      <th className="px-8 py-6 text-right pr-8">
+                        <button 
+                          onClick={() => toast.success('Sent bulk replies to all pending feedback')}
+                          className="text-[10px] font-black uppercase tracking-widest text-amber-500 hover:text-amber-600 transition-colors flex items-center gap-1 justify-end w-full"
+                        >
+                          <Send size={12} /> Bulk Reply
+                        </button>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
