@@ -72,8 +72,11 @@ export function FoodPage() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await getMenu();
-        setMenuItems(res.data);
+        // No pagination on the food page — fetch all items in one go for the menu
+        const res = await getMenu({ limit: 1000 });
+        // Backend now returns { items, total, totalPages, globalStats }
+        const items = res.data?.items ?? res.data;
+        setMenuItems(Array.isArray(items) ? items : []);
       } catch (err) {
         console.error('Failed to fetch menu:', err);
       }
