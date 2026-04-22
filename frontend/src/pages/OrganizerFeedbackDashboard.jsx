@@ -69,7 +69,16 @@ export function OrganizerFeedbackDashboard() {
         }, {}))
         .map(([title, data]) => ({ title, avg: data.sum / data.count }))
         .sort((a, b) => b.avg - a.avg)[0]?.title
-      : 'N/A'
+      : 'N/A',
+    sourceBreakdown: feedbacks.length > 0
+      ? Object.entries(feedbacks.reduce((acc, f) => {
+          const title = f.event?.title || 'General';
+          acc[title] = (acc[title] || 0) + 1;
+          return acc;
+        }, {}))
+        .map(([title, count]) => ({ title, count }))
+        .sort((a, b) => b.count - a.count)
+      : []
   };
 
   const handleDelete = async (id) => {
