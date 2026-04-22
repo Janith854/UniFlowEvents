@@ -26,16 +26,9 @@ export function OrganizerFeedbackDashboard() {
     }
   };
 
-  const fetchFeedback = async () => {
-    try {
-      const { data } = await feedbackService.getAllFeedback();
-      setFeedbacks(data);
-      setIsLoading(false);
-    } catch (err) {
-      toast.error('Failed to load feedback');
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    applyFilters();
+  }, [filters, feedbacks]);
 
   const applyFilters = () => {
     let result = feedbacks;
@@ -54,6 +47,7 @@ export function OrganizerFeedbackDashboard() {
       await feedbackService.deleteFeedback(id);
       toast.success('Feedback deleted');
       fetchFeedback();
+      fetchStats();
     } catch (err) {
       toast.error('Delete failed');
     }
@@ -77,17 +71,17 @@ export function OrganizerFeedbackDashboard() {
       <Navbar />
       <main className="pt-24 px-4 pb-16">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
             <div>
-              <h1 className="text-3xl font-black text-zinc-950 tracking-tight flex items-center gap-3">
-                <MessageSquare className="text-amber-400" size={32} />
+              <h1 className="text-4xl font-black text-zinc-950 tracking-tighter flex items-center gap-3">
+                <MessageSquare className="text-amber-400" size={40} />
                 Feedback Dashboard
               </h1>
               <p className="text-gray-500 font-medium">Manage student experiences and AI-driven insights</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+              <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
                 <Filter size={16} className="text-gray-400" />
                 <select 
                   className="bg-transparent text-sm font-bold text-zinc-950 outline-none cursor-pointer"
@@ -99,7 +93,7 @@ export function OrganizerFeedbackDashboard() {
                 </select>
               </div>
 
-              <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+              <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
                 <Filter size={16} className="text-gray-400" />
                 <select 
                   className="bg-transparent text-sm font-bold text-zinc-950 outline-none cursor-pointer"
@@ -114,6 +108,8 @@ export function OrganizerFeedbackDashboard() {
               </div>
             </div>
           </div>
+
+          <FeedbackStats stats={stats} />
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
