@@ -16,6 +16,7 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.uniflow.registration.util.RegistrationException;
+import com.uniflow.registration.util.InputSanitizer;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -158,8 +159,7 @@ public class StudentEventRegistrationServlet extends HttpServlet {
     }
 
     private String param(HttpServletRequest req, String key) {
-        String val = req.getParameter(key);
-        return val == null ? "" : val.trim();
+        return InputSanitizer.sanitize(req.getParameter(key));
     }
 
     private boolean hasTickets(Document event) {
