@@ -12,7 +12,17 @@ export function FeedbackStats({ stats, isLoading }) {
     );
   }
 
-  if (!stats) return null;
+  if (!stats || totalFeedback === 0) {
+    return (
+      <div className="bg-white/50 backdrop-blur-xl p-12 rounded-[40px] border border-white border-dashed mb-12 flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <MessageSquare size={32} className="text-gray-300" />
+        </div>
+        <h3 className="text-xl font-black text-zinc-950 mb-2">No feedback analytics yet</h3>
+        <p className="text-gray-500 max-w-xs font-medium">As soon as students start submitting reviews, you'll see live insights here.</p>
+      </div>
+    );
+  }
 
   const { averageRating, totalFeedback, satisfaction, commonComplaints } = stats;
   const positivePercentage = totalFeedback > 0 ? Math.round((satisfaction.positive / totalFeedback) * 100) : 0;
