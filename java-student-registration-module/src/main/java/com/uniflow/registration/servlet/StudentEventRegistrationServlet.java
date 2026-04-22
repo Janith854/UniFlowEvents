@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.uniflow.registration.util.RegistrationException;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -68,28 +69,10 @@ public class StudentEventRegistrationServlet extends HttpServlet {
         String department = param(req, "department");
         String year = param(req, "year");
 
-        if (fullName.isBlank() || email.isBlank()) {
-            fail(req, resp, "Full Name and Email are required.");
-            return;
-        }
-
-        if (!isEventPublished(event)) {
-            fail(req, resp, "Event is not published.");
-            return;
-        }
-
-        if (isDeadlinePassed(event)) {
-            fail(req, resp, "Registration deadline has passed.");
-            return;
-        }
-
-        if (isCapacityExceeded(event)) {
-            fail(req, resp, "Event capacity is full.");
-            return;
-        }
-
-        if (registrationRepository.existsByUserAndEvent(userId, eventId)) {
-            fail(req, resp, "Duplicate registration is not allowed.");
+        try {
+            validateRequest(event, fullName, email, userId, eventId);
+        } catch (RegistrationException e) {
+            fail(req, resp, e.getMessage());
             return;
         }
 
@@ -203,5 +186,23 @@ public class StudentEventRegistrationServlet extends HttpServlet {
         int capacity = event.getInteger("capacity", 0);
         int registeredCount = event.getInteger("registeredCount", 0);
         return Math.max(0, capacity - registeredCount);
+    }
+
+    private void validateRequest(Document event, String fullName, String email, String userId, String eventId) throws RegistrationException {
+        if (fullName.isBlank() || email.isBlank()) {
+            throw new RegistrationException("Full Name and Email are required.");
+        }
+        if (!isEventPublished(event)) {
+            throw new RegistrationException("Event is not published.");
+        }
+        if (isDeadlinePassed(event)) {
+            throw new RegistrationException("Registration deadline has passed.");
+        }
+        if (isCapacityExceeded(event)) {
+            throw new RegistrationException("Event capacity is full.");
+        }
+        if (registrationRepository.existsByUserAndEvent(userId, eventId)) {
+            throw new RegistrationException("Duplicate registration is not allowed.");
+        }
     }
 }
