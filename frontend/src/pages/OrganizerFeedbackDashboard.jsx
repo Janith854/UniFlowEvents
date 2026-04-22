@@ -339,9 +339,12 @@ export function OrganizerFeedbackDashboard() {
                     )) : (
                       <tr>
                         <td colSpan="6" className="px-8 py-20 text-center">
-                          <div className="flex flex-col items-center gap-3 text-gray-400">
-                            <CheckCircle2 size={48} strokeWidth={1} />
-                            <p className="text-lg font-bold">No feedback matches your filters.</p>
+                          <div className="flex flex-col items-center gap-4 text-gray-400">
+                            <img src="/images/no-feedback.png" alt="No Feedback" className="w-48 h-48 object-contain opacity-50" />
+                            <div className="space-y-1">
+                              <p className="text-xl font-black text-zinc-950">No feedback found</p>
+                              <p className="text-sm font-medium">Try adjusting your filters to see more results.</p>
+                            </div>
                           </div>
                         </td>
                       </tr>
