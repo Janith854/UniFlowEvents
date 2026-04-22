@@ -5,6 +5,7 @@ const eventSchema = new mongoose.Schema({
     description: { type: String, required: true },
     date: { type: Date, required: true },
     location: { type: String, required: true }, // Venue
+    organizerName: { type: String },
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     // Phase 1 Additions
     category: { type: String, enum: ['Academic', 'Social', 'Sports', 'Workshop', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'], default: 'Other' },

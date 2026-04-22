@@ -195,7 +195,7 @@ export function EventPage() {
           </span>
           <h1 className="text-3xl md:text-5xl font-black text-white mb-2 leading-tight">{event.title}</h1>
           <p className="text-gray-300 text-lg md:text-xl font-medium flex items-center gap-2">
-            By {event.organizer?.name || 'University'}
+            By {event.organizerName || event.organizer?.name || 'University'}
           </p>
         </div>
       </div>

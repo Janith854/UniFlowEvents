@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { getEventById, updateEvent } from '../services/eventService';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save } from 'lucide-react';
-
-import { Link } from 'react-router-dom';
 
 export function EditEvent() {
   const { id } = useParams();
@@ -31,6 +29,7 @@ export function EditEvent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [capacityType, setCapacityType] = useState('Limited');
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -38,17 +37,18 @@ export function EditEvent() {
         const { data } = await getEventById(id);
         setFormData({
           title: data.title || '',
-          organizerName: data.organizerName || '',
+          organizerName: data.organizerName || data.organizer?.name || '',
           category: data.category || '',
           date: data.date ? new Date(data.date).toISOString().slice(0, 16) : '',
           registrationDeadline: data.registrationDeadline ? new Date(data.registrationDeadline).toISOString().slice(0, 16) : '',
           location: data.location || '',
-          capacity: data.capacity || '',
+          capacity: data.capacity === -1 ? '' : (data.capacity || ''),
           description: data.description || '',
           enableTickets: data.ticketing?.enabled || false,
           regularPrice: data.ticketing?.regularPrice ?? '0',
           vipPrice: data.ticketing?.vipPrice ?? '0',
         });
+        setCapacityType(data.capacity === -1 ? 'Unlimited' : 'Limited');
         if (data.image) {
           const imgUrl = data.image.startsWith('http') ? data.image : `http://localhost:5002${data.image}`;
           setExistingImage(imgUrl);
@@ -98,7 +98,7 @@ export function EditEvent() {
     form.append('date', formData.date);
     form.append('registrationDeadline', formData.registrationDeadline);
     form.append('location', formData.location);
-    form.append('capacity', formData.capacity);
+    form.append('capacity', capacityType === 'Unlimited' ? 'Unlimited' : formData.capacity);
     form.append('description', formData.description);
     form.append('ticketing', JSON.stringify({
       enabled: formData.enableTickets,
@@ -127,23 +127,6 @@ export function EditEvent() {
     );
   }
 
-  const InputField = ({ label, name, type = 'text', placeholder, required = false, children }) => (
-    <div className="space-y-1.5">
-      <label className="text-sm font-bold text-gray-700">{label}{required && <span className="text-rose-500 ml-1">*</span>}</label>
-      {children || (
-        <input
-          type={type}
-          name={name}
-          value={formData[name]}
-          onChange={handleChange}
-          placeholder={placeholder}
-          required={required}
-          className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium placeholder:text-gray-300 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all"
-        />
-      )}
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -165,10 +148,40 @@ export function EditEvent() {
           {/* Basic Info */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
             <h2 className="text-sm font-black text-gray-500 uppercase tracking-wider">Basic Information</h2>
-            <InputField label="Event Title" name="title" placeholder="Enter event title..." required />
-            <InputField label="Organizer Name" name="organizerName" placeholder="Your name or organization" required />
-            <InputField label="Category" name="category">
-              <select name="category" value={formData.category} onChange={handleChange} required
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Event Title <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Enter event title..."
+                required
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Organizer Name <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                name="organizerName"
+                value={formData.organizerName}
+                onChange={handleChange}
+                placeholder="Your name or organization"
+                required
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Category <span className="text-rose-500">*</span></label>
+              <select 
+                name="category" 
+                value={formData.category} 
+                onChange={handleChange} 
+                required
                 className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
               >
                 <option value="">Select a category</option>
@@ -176,8 +189,10 @@ export function EditEvent() {
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-            </InputField>
-            <InputField label="Description" name="description">
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Description <span className="text-rose-500">*</span></label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -185,20 +200,82 @@ export function EditEvent() {
                 rows={4}
                 placeholder="Describe the event..."
                 required
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium placeholder:text-gray-300 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all resize-none"
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all resize-none"
               />
-            </InputField>
+            </div>
           </div>
 
           {/* Time & Location */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
             <h2 className="text-sm font-black text-gray-500 uppercase tracking-wider">Time & Location</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <InputField label="Event Date & Time" name="date" type="datetime-local" required />
-              <InputField label="Registration Deadline" name="registrationDeadline" type="datetime-local" />
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Event Date & Time <span className="text-rose-500">*</span></label>
+                <input
+                  type="datetime-local"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Registration Deadline</label>
+                <input
+                  type="datetime-local"
+                  name="registrationDeadline"
+                  value={formData.registrationDeadline}
+                  onChange={handleChange}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                />
+              </div>
             </div>
-            <InputField label="Venue" name="location" placeholder="Hall A, Main Auditorium..." required />
-            <InputField label="Capacity" name="capacity" type="number" placeholder="e.g. 200" required />
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Venue <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Hall A, Main Auditorium..."
+                required
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-gray-700">Capacity Setting</label>
+                <div className="flex p-1 bg-gray-100 rounded-xl border border-gray-200 w-fit">
+                  {['Limited', 'Unlimited'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setCapacityType(type)}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${capacityType === type ? 'bg-amber-400 text-zinc-950 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {capacityType === 'Limited' && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <label className="text-sm font-bold text-gray-700">Total Capacity <span className="text-rose-500">*</span></label>
+                  <input
+                    type="number"
+                    name="capacity"
+                    value={formData.capacity}
+                    onChange={handleChange}
+                    placeholder="e.g. 200"
+                    required
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Image */}
@@ -228,9 +305,29 @@ export function EditEvent() {
               </label>
             </div>
             {formData.enableTickets && (
-              <div className="grid grid-cols-2 gap-5">
-                <InputField label="Regular Ticket Price (Rs.)" name="regularPrice" type="number" placeholder="0" />
-                <InputField label="VIP Ticket Price (Rs.)" name="vipPrice" type="number" placeholder="0" />
+              <div className="grid grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700">Regular Price (Rs.)</label>
+                  <input
+                    type="number"
+                    name="regularPrice"
+                    value={formData.regularPrice}
+                    onChange={handleChange}
+                    placeholder="0"
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700">VIP Price (Rs.)</label>
+                  <input
+                    type="number"
+                    name="vipPrice"
+                    value={formData.vipPrice}
+                    onChange={handleChange}
+                    placeholder="0"
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
               </div>
             )}
           </div>
