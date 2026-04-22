@@ -275,10 +275,27 @@ export function AdminInventoryDashboard() {
       <main className="pt-24 px-4 w-full max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <h1 className="text-3xl font-black text-gray-900">Inventory Management</h1>
-          <div className="flex items-center gap-2">
-            <button onClick={generateCSVReport} className="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl shadow-sm"><FileSpreadsheet size={20} /></button>
-            <button onClick={generatePDFReport} className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl shadow-sm"><FileText size={20} /></button>
-            <button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-400 text-gray-900 px-6 py-3 rounded-xl font-bold shadow-sm">+ Add Item</button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={generateCSVReport} 
+              className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-3 rounded-xl transition-all active:scale-95 border border-emerald-100"
+              title="Download CSV"
+            >
+              <FileSpreadsheet size={20} />
+            </button>
+            <button 
+              onClick={generatePDFReport} 
+              className="bg-rose-50 text-rose-600 hover:bg-rose-100 p-3 rounded-xl transition-all active:scale-95 border border-rose-100"
+              title="Download PDF"
+            >
+              <FileText size={20} />
+            </button>
+            <button 
+              onClick={() => setShowAddModal(true)} 
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95 ml-2"
+            >
+              + Add Item
+            </button>
           </div>
         </div>
 
@@ -340,9 +357,21 @@ export function AdminInventoryDashboard() {
                     </div>
                   </td>
                   <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => { setEditingItem(item); setShowEditModal(true); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit3 size={18} /></button>
-                      <button onClick={() => handleDelete(item._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                    <div className="flex items-center justify-center gap-3">
+                      <button 
+                        onClick={() => { setEditingItem(item); setShowEditModal(true); }} 
+                        className="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-xl transition-all active:scale-90"
+                        title="Edit Item"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item._id)} 
+                        className="p-2.5 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-xl transition-all active:scale-90"
+                        title="Delete Item"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </td>
                 </tr>
