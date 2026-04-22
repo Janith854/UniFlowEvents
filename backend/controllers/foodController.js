@@ -56,8 +56,53 @@ exports.removeCartLock = async (req, res) => {
 
 exports.getMenu = async (req, res) => {
     try {
-        const menu = await MenuItem.find();
-        res.json(menu);
+        const { page = 1, limit = 50, search, category, stall, report } = req.query;
+        let query = {};
+
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+        if (category && category !== 'All Categories') {
+            query.category = category;
+        }
+        if (stall && stall !== 'All Stalls') {
+            query.stallNumber = { $regex: stall, $options: 'i' };
+        }
+
+        if (report === 'true') {
+            const allItems = await MenuItem.find(query).sort({ name: 1 });
+            return res.json(allItems);
+        }
+
+        const skip = (page - 1) * limit;
+        const total = await MenuItem.countDocuments(query);
+        const items = await MenuItem.find(query)
+                                    .sort({ name: 1 })
+                                    .skip(skip)
+                                    .limit(Number(limit));
+
+        // Aggregate stats for inventory overview
+        const stats = await MenuItem.aggregate([
+            { $match: query },
+            { $group: {
+                _id: null,
+                totalItems: { $sum: 1 },
+                totalStock: { $sum: "$stockCount" },
+                totalValue: { $sum: { $multiply: ["$price", "$stockCount"] } },
+                lowStockCount: { $sum: { $cond: [{ $lte: ["$stockCount", 5] }, 1, 0] } }
+            }}
+        ]);
+
+        const globalStats = stats.length > 0 ? stats[0] : { totalItems: 0, totalStock: 0, totalValue: 0, lowStockCount: 0 };
+
+        res.json({
+            items,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
+            globalStats
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

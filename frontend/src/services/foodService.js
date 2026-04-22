@@ -1,6 +1,6 @@
 import API from './api';
 
-export const getMenu = () => API.get('/food/menu');
+export const getMenu = (params) => API.get('/food/menu', { params });
 export const addCartLock = (data) => API.post('/food/lock', data);
 export const removeCartLock = (data) => API.delete('/food/lock', { data });
 
