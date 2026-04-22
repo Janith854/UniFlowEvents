@@ -51,10 +51,11 @@ export function OrganizerFeedbackDashboard() {
     negativePercentage: feedbacks.length > 0
       ? Math.round((feedbacks.filter(f => f.sentiment === 'Negative').length / feedbacks.length) * 100)
       : 0,
-    complaints: feedbacks
+    complaints: Array.from(new Set(feedbacks
       .filter(f => f.sentiment === 'Negative')
       .map(f => f.overall?.comment)
-      .slice(0, 3)
+      .filter(comment => comment && comment.trim().length > 0)
+    )).slice(0, 3)
   };
 
   const handleDelete = async (id) => {
