@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Info, Star } from 'lucide-react';
 import { createFeedback } from '../services/feedbackService';
 import { getEvents } from '../services/eventService';
@@ -27,6 +27,7 @@ const StarRating = ({ value, onChange, disabled }) => (
 
 export function FeedbackModal({ isOpen, onClose, events, initialEventId }) {
   const { refreshProfile } = useAuth();
+  const closeTimeoutRef = useRef(null);
   const [availableEvents, setAvailableEvents] = useState(Array.isArray(events) ? events : []);
   const [form, setForm] = useState({
     eventId: '',
@@ -82,6 +83,14 @@ export function FeedbackModal({ isOpen, onClose, events, initialEventId }) {
     setReplyMessage('');
     setFieldErrors({});
   }, [isOpen, availableEvents, initialEventId]);
+
+  useEffect(() => {
+    if (isOpen) return;
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, [isOpen]);
 
   const selectedEvent = useMemo(
     () => availableEvents.find((event) => event._id === form.eventId),
@@ -154,6 +163,11 @@ export function FeedbackModal({ isOpen, onClose, events, initialEventId }) {
       setFieldErrors({});
       if (refreshProfile) {
         await refreshProfile();
+      }
+      if (onClose) {
+        closeTimeoutRef.current = setTimeout(() => {
+          onClose();
+        }, 1200);
       }
     } catch (error) {
       console.error('Feedback submission error:', error);
