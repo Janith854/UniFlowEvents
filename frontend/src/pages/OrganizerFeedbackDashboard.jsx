@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as feedbackService from '../services/feedbackService';
-import { MessageSquare, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, ChevronRight } from 'lucide-react';
+import { MessageSquare, MessageCircle, Star, Filter, Send, Smile, Meh, Frown, CheckCircle2, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Navbar } from '../components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
@@ -21,18 +21,24 @@ export function OrganizerFeedbackDashboard() {
   }, [filters, feedbacks]);
 
   const fetchFeedback = async () => {
+    setIsLoading(true);
     try {
       const { data } = await feedbackService.getAllFeedback();
-      setFeedbacks(data);
-      setIsLoading(false);
+      if (!Array.isArray(data)) {
+        toast.error('Unexpected feedback response');
+      }
+      setFeedbacks(Array.isArray(data) ? data : []);
     } catch (err) {
-      toast.error('Failed to load feedback');
+      const serverMsg = err?.response?.data?.msg || err?.response?.data?.error;
+      toast.error(serverMsg || 'Failed to load feedback');
+      setFeedbacks([]);
+    } finally {
       setIsLoading(false);
     }
   };
 
   const applyFilters = () => {
-    let result = feedbacks;
+    let result = Array.isArray(feedbacks) ? feedbacks : [];
     if (filters.rating !== 'All') {
       result = result.filter(f => f.overall?.rating === Number(filters.rating));
     }
