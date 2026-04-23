@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Star } from 'lucide-react';
+import { CheckCircle2, Info, Star } from 'lucide-react';
 import { createFeedback } from '../services/feedbackService';
 import { getEvents } from '../services/eventService';
 import { useAuth } from '../context/AuthContext';
@@ -204,20 +204,34 @@ export function FeedbackModal({ isOpen, onClose, events, initialEventId }) {
           </button>
         </div>
         <div className="p-6">
-          {status && (
-            <div className={`mb-6 p-4 rounded-lg text-sm font-medium ${
-              status.toLowerCase().includes('success') || status.toLowerCase().includes('saved')
-                ? 'bg-green-50 text-green-700 border border-green-100'
-                : 'bg-red-50 text-red-700 border border-red-100'
-            }`}>
-              {status}
-            </div>
-          )}
-          {replyMessage && (
-            <div className="mb-6 p-4 rounded-lg text-sm font-medium bg-amber-50 text-amber-700 border border-amber-100">
-              {replyMessage}
-            </div>
-          )}
+          {status && (() => {
+            const isSuccess = status.toLowerCase().includes('success') || status.toLowerCase().includes('saved');
+            return (
+              <div className="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg ${
+                    isSuccess ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                  }`}>
+                    {isSuccess ? <CheckCircle2 className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-zinc-900">
+                      {isSuccess ? 'Feedback submitted' : 'Submission error'}
+                    </p>
+                    <p className={`text-sm ${isSuccess ? 'text-emerald-700' : 'text-rose-600'}`}>
+                      {status}
+                    </p>
+                    {isSuccess && replyMessage && (
+                      <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Organizer reply</p>
+                        <p className="mt-1 text-sm font-medium text-amber-900">{replyMessage}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>

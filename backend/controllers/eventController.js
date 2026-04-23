@@ -6,7 +6,7 @@ const emailService = require('../services/emailService');
 
 exports.getEvents = async (req, res) => {
     try {
-        const events = await Event.find().populate('organizer', 'name email');
+        const events = await Event.find().sort({ date: 1 }).populate('organizer', 'name email');
         res.json(events);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -34,11 +34,26 @@ exports.createEvent = async (req, res) => {
         if (typeof body.ticketing === 'string') {
             try { body.ticketing = JSON.parse(body.ticketing); } catch (e) {}
         }
+
+        // Convert "Unlimited" capacity string to sentinel value -1
+        if (body.capacity === 'Unlimited' || body.capacity === '') {
+            body.capacity = -1;
+        } else if (body.capacity !== undefined) {
+            body.capacity = Number(body.capacity);
+        }
+
+        // Strip empty registrationDeadline so Mongoose doesn't try to cast empty string as Date
+        if (!body.registrationDeadline) {
+            delete body.registrationDeadline;
+        }
         
         // Ensure organizer is set
         if (req.user && req.user._id) {
             body.organizer = req.user._id;
         }
+
+        // Strict block removed to allow organizer override after confirmation. 
+        // Venue conflicts are still handled by detectConflict middleware.
 
         const newEvent = new Event(body);
         const event = await newEvent.save();
@@ -66,6 +81,20 @@ exports.updateEvent = async (req, res) => {
         if (typeof body.ticketing === 'string') {
             try { body.ticketing = JSON.parse(body.ticketing); } catch (e) {}
         }
+
+        // Convert "Unlimited" capacity string to sentinel value -1
+        if (body.capacity === 'Unlimited' || body.capacity === '') {
+            body.capacity = -1;
+        } else if (body.capacity !== undefined) {
+            body.capacity = Number(body.capacity);
+        }
+
+        // Strip empty registrationDeadline
+        if (!body.registrationDeadline) {
+            delete body.registrationDeadline;
+        }
+
+        // Strict block removed to allow organizer override after confirmation.
 
         const updatedEvent = await Event.findByIdAndUpdate(req.params.id, body, { new: true });
         res.json(updatedEvent);
@@ -226,6 +255,45 @@ exports.analyzeEventFeedback = async (req, res) => {
         }
 
         res.json({ suggestions });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+exports.checkOrganizerConflict = async (req, res) => {
+    try {
+        const { date, excludeId } = req.query;
+        if (!date) return res.status(400).json({ msg: 'Date is required' });
+
+        const searchDate = new Date(date);
+        const startOfDay = new Date(searchDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(searchDate.setHours(23, 59, 59, 999));
+
+        // Check ALL events on that date (not just the organizer's own events)
+        const query = {
+            date: { $gte: startOfDay, $lte: endOfDay },
+            status: { $ne: 'Rejected' }
+        };
+
+        if (excludeId) {
+            query._id = { $ne: excludeId };
+        }
+
+        const conflictingEvents = await Event.find(query);
+
+        if (conflictingEvents.length > 0) {
+            // Return the first conflict found with details
+            const conflict = conflictingEvents[0];
+            return res.json({ 
+                conflict: true, 
+                event: {
+                    title: conflict.title,
+                    date: conflict.date,
+                    location: conflict.location
+                }
+            });
+        }
+
+        res.json({ conflict: false });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

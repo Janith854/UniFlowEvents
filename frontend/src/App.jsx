@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -22,7 +22,7 @@ import { OrganizerFeedbackDashboard } from './pages/OrganizerFeedbackDashboard';
 import { Feedback } from './pages/Feedback';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { UserManagementPage } from './pages/UserManagement';
-import { CalendarView } from './pages/CalendarView';
+const CalendarView = lazy(() => import('./pages/CalendarView').then(m => ({ default: m.CalendarView })));
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 import { ApprovalQueue } from './pages/ApprovalQueue';
 import { CreateEvent } from './pages/CreateEvent';
@@ -83,7 +83,11 @@ export function App() {
           }
         />
         <Route path="/events/:id" element={<EventPage />} />
-        <Route path="/calendar" element={<CalendarView />} />
+        <Route path="/calendar" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400 font-medium">Loading Calendar...</div>}>
+            <CalendarView />
+          </Suspense>
+        } />
         <Route
           path="/analytics"
           element={

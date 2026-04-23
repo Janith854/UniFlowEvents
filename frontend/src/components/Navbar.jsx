@@ -7,6 +7,7 @@ import {
   X,
   Sparkles,
   Calendar,
+  CalendarDays,
   Utensils,
   Car,
   LayoutDashboard,
@@ -33,6 +34,7 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/events', label: 'Events', icon: Calendar },
+    { href: '/calendar', label: 'Calendar', icon: CalendarDays },
     { href: role === 'organizer' ? '/admin/food' : '/food', label: 'Food', icon: Utensils },
     { href: '/parking', label: 'Parking', icon: Car }
   ];

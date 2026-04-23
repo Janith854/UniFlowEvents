@@ -87,6 +87,18 @@ const getSentiment = (averageRating) => {
     return 'Neutral';
 };
 
+exports.getMyFeedback = async (req, res) => {
+    try {
+        const user = req.user._id;
+        const feedback = await Feedback.find({ user })
+            .populate('event', 'title date location image')
+            .sort({ createdAt: -1 });
+        res.json(feedback);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.getAllFeedback = async (req, res) => {
     try {
         const feedback = await Feedback.find({ status: 'submitted' })
@@ -180,6 +192,52 @@ exports.createFeedback = async (req, res) => {
             replyMessage: nextStatus === 'submitted' ? aiSuggestedReply : null,
             status: nextStatus
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.replyToFeedback = async (req, res) => {
+    try {
+        const { message } = req.body;
+        const feedbackId = req.params.id;
+        const user = req.user._id;
+
+        if (!message) {
+            return res.status(400).json({ msg: 'Message is required.' });
+        }
+
+        const feedback = await Feedback.findById(feedbackId).populate('event');
+        if (!feedback) {
+            return res.status(404).json({ msg: 'Feedback not found.' });
+        }
+
+        // Add reply to conversation
+        feedback.replies.push({
+            user,
+            message,
+            createdAt: new Date()
+        });
+        feedback.updatedAt = new Date();
+        await feedback.save();
+
+        // Notify the OTHER party
+        // If the replier is the student who created the feedback, notify the organizer (not implemented yet, usually dashboard shows it)
+        // If the replier is NOT the student, notify the student
+        if (String(user) !== String(feedback.user)) {
+            await User.findByIdAndUpdate(feedback.user, {
+                $push: {
+                    inbox: {
+                        type: 'feedback-reply',
+                        title: `New reply for ${feedback.event.title}`,
+                        message: message,
+                        event: feedback.event._id
+                    }
+                }
+            });
+        }
+
+        res.json(feedback);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

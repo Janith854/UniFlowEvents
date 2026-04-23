@@ -2,28 +2,10 @@ const mongoose = require('mongoose');
 const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
 const Event = require('../models/Event');
-const Feedback = require('../models/Feedback');
 
-// ── Background Seeder (non-blocking) ───────────────────────────────────────
-// Runs AFTER the server is already listening — zero startup delay
 const seedDatabase = async () => {
     try {
-        // Cleanup legacy feedback index
-        try {
-            const indexes = await Feedback.collection.indexes();
-            const legacyIndex = indexes.find(
-                (idx) => idx.name === 'userId_1_eventId_1' || (idx.key?.userId === 1 && idx.key?.eventId === 1)
-            );
-            if (legacyIndex) {
-                await Feedback.collection.dropIndex(legacyIndex.name);
-                console.log(`Dropped legacy feedback index: ${legacyIndex.name}`);
-            }
-        } catch (err) {
-            if (err.codeName !== 'NamespaceNotFound') {
-                console.warn('Feedback index cleanup skipped:', err.message);
-            }
-        }
-
+        // Seed database
         const count = await MenuItem.countDocuments();
         if (count === 0) {
             await MenuItem.insertMany([
@@ -78,7 +60,9 @@ const connectDB = async () => {
     let uri = process.env.MONGO_URI;
 
     try {
-        if (!uri) throw new Error('No URI provided');
+        if (!uri || uri.includes('127.0.0.1') || uri.includes('localhost')) {
+            throw new Error('No MongoDB Atlas URI found or using local/localhost. Defaulting to in-memory/temporary database.');
+        }
         
         console.log('🔌 Connecting to MongoDB Atlas...');
         await mongoose.connect(uri, {
@@ -87,7 +71,7 @@ const connectDB = async () => {
         });
         console.log('🍃 MongoDB Atlas connected successfully');
     } catch (atlasError) {
-        console.warn(`⚠️ Atlas connection failed (${atlasError.message}).`);
+        console.warn(`⚠️ Atlas connection skipped/failed (${atlasError.message}).`);
         console.log('🔄 Falling back to local in-memory database (MongoMemoryServer)...');
         
         const { MongoMemoryServer } = require('mongodb-memory-server');
@@ -110,6 +94,7 @@ const connectDB = async () => {
         console.log('🍃 Fallback In-Memory MongoDB connected successfully:', uri);
     }
 
+>>>>>>> develop2
     // Run seeding in background — server is ready IMMEDIATELY
     setImmediate(() => seedDatabase());
 

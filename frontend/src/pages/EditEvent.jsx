@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
-import { getEventById, updateEvent } from '../services/eventService';
+import { getEventById, updateEvent, checkOrganizerConflict } from '../services/eventService';
+import { BASE_URL } from '../services/api';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save } from 'lucide-react';
-
-import { Link } from 'react-router-dom';
 
 export function EditEvent() {
   const { id } = useParams();
@@ -31,6 +30,15 @@ export function EditEvent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [capacityType, setCapacityType] = useState('Limited');
+
+  const [conflictData, setConflictData] = useState(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const hasConfirmedConflict = React.useRef(false);
+
+  useEffect(() => {
+    hasConfirmedConflict.current = false;
+  }, [formData.date]);
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -38,19 +46,20 @@ export function EditEvent() {
         const { data } = await getEventById(id);
         setFormData({
           title: data.title || '',
-          organizerName: data.organizerName || '',
+          organizerName: data.organizerName || data.organizer?.name || '',
           category: data.category || '',
           date: data.date ? new Date(data.date).toISOString().slice(0, 16) : '',
           registrationDeadline: data.registrationDeadline ? new Date(data.registrationDeadline).toISOString().slice(0, 16) : '',
           location: data.location || '',
-          capacity: data.capacity || '',
+          capacity: data.capacity === -1 ? '' : (data.capacity || ''),
           description: data.description || '',
           enableTickets: data.ticketing?.enabled || false,
           regularPrice: data.ticketing?.regularPrice ?? '0',
           vipPrice: data.ticketing?.vipPrice ?? '0',
         });
+        setCapacityType(data.capacity === -1 ? 'Unlimited' : 'Limited');
         if (data.image) {
-          const imgUrl = data.image.startsWith('http') ? data.image : `http://localhost:5002${data.image}`;
+          const imgUrl = data.image.startsWith('http') ? data.image : `${BASE_URL}${data.image}`;
           setExistingImage(imgUrl);
           setImagePreview(imgUrl);
         }
@@ -88,26 +97,35 @@ export function EditEvent() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsSubmitting(true);
 
-    const form = new FormData();
-    form.append('title', formData.title);
-    form.append('organizerName', formData.organizerName);
-    form.append('category', formData.category);
-    form.append('date', formData.date);
-    form.append('registrationDeadline', formData.registrationDeadline);
-    form.append('location', formData.location);
-    form.append('capacity', formData.capacity);
-    form.append('description', formData.description);
-    form.append('ticketing', JSON.stringify({
-      enabled: formData.enableTickets,
-      regularPrice: Number(formData.regularPrice),
-      vipPrice: Number(formData.vipPrice),
-    }));
-    if (newImage) form.append('image', newImage);
-
     try {
+      // 1. Organizer Schedule Conflict Check (Same Day)
+      const { data: conflictRes } = await checkOrganizerConflict(formData.date, id);
+      if (conflictRes.conflict && !hasConfirmedConflict.current) {
+        setConflictData(conflictRes.event);
+        setShowConflictModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const form = new FormData();
+      form.append('title', formData.title);
+      form.append('organizerName', formData.organizerName);
+      form.append('category', formData.category);
+      form.append('date', formData.date);
+      form.append('registrationDeadline', formData.registrationDeadline);
+      form.append('location', formData.location);
+      form.append('capacity', capacityType === 'Unlimited' ? 'Unlimited' : formData.capacity);
+      form.append('description', formData.description);
+      form.append('ticketing', JSON.stringify({
+        enabled: formData.enableTickets,
+        regularPrice: Number(formData.regularPrice),
+        vipPrice: Number(formData.vipPrice),
+      }));
+      if (newImage) form.append('image', newImage);
+
       await updateEvent(id, form);
       toast.success('Event updated successfully!');
       navigate('/events');
@@ -118,38 +136,22 @@ export function EditEvent() {
     }
   };
 
+  const handleProceed = () => {
+    setShowConflictModal(false);
+    hasConfirmedConflict.current = true;
+    handleSubmit();
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="pt-32 flex justify-center text-gray-500 font-medium">Loading event...</div>
-      </div>
+      <div className="pt-32 flex justify-center text-gray-500 font-medium">Loading event...</div>
     );
   }
 
-  const InputField = ({ label, name, type = 'text', placeholder, required = false, children }) => (
-    <div className="space-y-1.5">
-      <label className="text-sm font-bold text-gray-700">{label}{required && <span className="text-rose-500 ml-1">*</span>}</label>
-      {children || (
-        <input
-          type={type}
-          name={name}
-          value={formData[name]}
-          onChange={handleChange}
-          placeholder={placeholder}
-          required={required}
-          className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium placeholder:text-gray-300 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all"
-        />
-      )}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="pt-24 pb-16 max-w-3xl mx-auto px-4 sm:px-6">
-        
-        {/* Header */}
+    <div className="pt-24 pb-16 max-w-3xl mx-auto px-4 sm:px-6">
+      
+      {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link to="/events" className="p-2 rounded-xl bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -165,19 +167,51 @@ export function EditEvent() {
           {/* Basic Info */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
             <h2 className="text-sm font-black text-gray-500 uppercase tracking-wider">Basic Information</h2>
-            <InputField label="Event Title" name="title" placeholder="Enter event title..." required />
-            <InputField label="Organizer Name" name="organizerName" placeholder="Your name or organization" required />
-            <InputField label="Category" name="category">
-              <select name="category" value={formData.category} onChange={handleChange} required
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Event Title <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Enter event title..."
+                required
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Organizer Name <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                name="organizerName"
+                value={formData.organizerName}
+                onChange={handleChange}
+                placeholder="Your name or organization"
+                required
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Category <span className="text-rose-500">*</span></label>
+              <select 
+                name="category" 
+                value={formData.category} 
+                onChange={handleChange} 
+                required
                 className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
               >
                 <option value="">Select a category</option>
-                {['Sports', 'Music', 'Workshop', 'Seminar', 'Cultural', 'Community', 'Academic', 'Career', 'Miscellaneous'].map(c => (
+                {['Academic', 'Social', 'Sports', 'Workshop', 'Seminar', 'Cultural', 'Career', 'Tech', 'Music', 'Art', 'Other'].map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-            </InputField>
-            <InputField label="Description" name="description">
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Description <span className="text-rose-500">*</span></label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -185,20 +219,82 @@ export function EditEvent() {
                 rows={4}
                 placeholder="Describe the event..."
                 required
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium placeholder:text-gray-300 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all resize-none"
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all resize-none"
               />
-            </InputField>
+            </div>
           </div>
 
           {/* Time & Location */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
             <h2 className="text-sm font-black text-gray-500 uppercase tracking-wider">Time & Location</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <InputField label="Event Date & Time" name="date" type="datetime-local" required />
-              <InputField label="Registration Deadline" name="registrationDeadline" type="datetime-local" />
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Event Date & Time <span className="text-rose-500">*</span></label>
+                <input
+                  type="datetime-local"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Registration Deadline</label>
+                <input
+                  type="datetime-local"
+                  name="registrationDeadline"
+                  value={formData.registrationDeadline}
+                  onChange={handleChange}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                />
+              </div>
             </div>
-            <InputField label="Venue" name="location" placeholder="Hall A, Main Auditorium..." required />
-            <InputField label="Capacity" name="capacity" type="number" placeholder="e.g. 200" required />
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Venue <span className="text-rose-500">*</span></label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Hall A, Main Auditorium..."
+                required
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-gray-700">Capacity Setting</label>
+                <div className="flex p-1 bg-gray-100 rounded-xl border border-gray-200 w-fit">
+                  {['Limited', 'Unlimited'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setCapacityType(type)}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${capacityType === type ? 'bg-amber-400 text-zinc-950 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {capacityType === 'Limited' && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <label className="text-sm font-bold text-gray-700">Total Capacity <span className="text-rose-500">*</span></label>
+                  <input
+                    type="number"
+                    name="capacity"
+                    value={formData.capacity}
+                    onChange={handleChange}
+                    placeholder="e.g. 200"
+                    required
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Image */}
@@ -228,9 +324,29 @@ export function EditEvent() {
               </label>
             </div>
             {formData.enableTickets && (
-              <div className="grid grid-cols-2 gap-5">
-                <InputField label="Regular Ticket Price (Rs.)" name="regularPrice" type="number" placeholder="0" />
-                <InputField label="VIP Ticket Price (Rs.)" name="vipPrice" type="number" placeholder="0" />
+              <div className="grid grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700">Regular Price (Rs.)</label>
+                  <input
+                    type="number"
+                    name="regularPrice"
+                    value={formData.regularPrice}
+                    onChange={handleChange}
+                    placeholder="0"
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700">VIP Price (Rs.)</label>
+                  <input
+                    type="number"
+                    name="vipPrice"
+                    value={formData.vipPrice}
+                    onChange={handleChange}
+                    placeholder="0"
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -253,7 +369,61 @@ export function EditEvent() {
             </button>
           </div>
         </form>
-      </div>
+      {/* Conflict Modal */}
+      {showConflictModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[32px] shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 transition-all transform scale-100 opacity-100">
+            <div className="p-8 md:p-10">
+              <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              </div>
+              
+              <h2 className="text-2xl font-black text-gray-900 mb-4">Scheduling Conflict</h2>
+              <p className="text-gray-600 font-medium mb-6">
+                You already have an event on this date. Are you sure you want to proceed?
+              </p>
+
+              {conflictData && (
+                <div className="bg-gray-50 rounded-2xl p-5 mb-8 border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Conflicting Event Details</p>
+                  <h3 className="font-bold text-gray-900 mb-1">{conflictData.title}</h3>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      {new Date(conflictData.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      {new Date(conflictData.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                      {conflictData.location}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowConflictModal(false)}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-gray-100 text-gray-900 font-bold hover:bg-gray-200 transition-all active:scale-95"
+                >
+                  Cancel Submission
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleProceed}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-amber-400 text-zinc-950 font-black hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/20 active:scale-95"
+                >
+                  Yes, Proceed
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

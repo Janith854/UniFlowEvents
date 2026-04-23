@@ -3,7 +3,13 @@ const MenuItem = require('../models/MenuItem');
 const CartLock = require('../models/CartLock');
 const User = require('../models/User');
 const crypto = require('crypto');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Lazy-initialize Stripe to avoid crash when STRIPE_SECRET_KEY is not set at startup
+const getStripe = () => {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error('STRIPE_SECRET_KEY is not configured in .env');
+    return require('stripe')(key);
+};
 
 exports.addCartLock = async (req, res) => {
     try {
@@ -347,7 +353,7 @@ exports.createFoodOrder = async (req, res) => {
         if (paymentMethod === 'Card' && order.totalAmount > 0) {
             let session;
             try {
-                session = await stripe.checkout.sessions.create({
+                session = await getStripe().checkout.sessions.create({
                     payment_method_types: ['card'],
                     line_items: [{
                         price_data: {

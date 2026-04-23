@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { Link } from 'react-router-dom';
+import * as feedbackService from '../services/feedbackService';
 import {
   User, Mail, Shield, Star, Settings, Key, Users,
-  MessageSquare, AlertTriangle, CheckCircle, Camera
+  MessageSquare, AlertTriangle, CheckCircle, Camera,
+  Send, History, MessageCircle
 } from 'lucide-react';
 
 const getRoleColor = (role) => {
@@ -27,6 +29,8 @@ export function ProfilePage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('edit');
+  const [myFeedbacks, setMyFeedbacks] = useState([]);
+  const [replyTexts, setReplyTexts] = useState({});
   const feedbackReplies = (user?.inbox || []).filter((item) => item.type === 'feedback-reply');
   const joinedYear = user?.createdAt ? new Date(user.createdAt).getFullYear() : '---';
 
@@ -35,7 +39,30 @@ export function ProfilePage() {
   useEffect(() => {
     setName(user?.name || '');
     setEmail(user?.email || '');
+    if (role === 'student') fetchMyFeedback();
   }, [user]);
+
+  const fetchMyFeedback = async () => {
+    try {
+      const { data } = await feedbackService.getMyFeedback();
+      setMyFeedbacks(data);
+    } catch (err) {
+      console.error('Failed to load feedback history');
+    }
+  };
+
+  const handleReplySubmit = async (feedbackId) => {
+    const text = replyTexts[feedbackId];
+    if (!text?.trim()) return;
+    try {
+      await feedbackService.replyToFeedback(feedbackId, text);
+      setReplyTexts({ ...replyTexts, [feedbackId]: '' });
+      fetchMyFeedback();
+      showStatus('Reply sent successfully! ✓');
+    } catch (err) {
+      showStatus('Failed to send reply.', true);
+    }
+  };
 
   const showStatus = (msg, isError = false) => {
     if (isError) setError(msg);
@@ -165,6 +192,7 @@ export function ProfilePage() {
               {[
                 { id: 'edit', label: 'Edit Profile', icon: Settings },
                 { id: 'password', label: 'Security', icon: Key },
+                { id: 'feedback', label: 'My Feedback', icon: MessageCircle },
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -275,6 +303,85 @@ export function ProfilePage() {
                     </button>
                   </div>
                 </form>
+              )}
+
+              {activeTab === 'feedback' && (
+                <div className="space-y-8">
+                  {myFeedbacks.length === 0 ? (
+                    <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm font-medium">You haven't submitted any feedback yet.</p>
+                      <Link to="/feedback" className="text-amber-500 font-bold text-xs uppercase tracking-widest mt-2 inline-block hover:underline">Submit Feedback →</Link>
+                    </div>
+                  ) : (
+                    myFeedbacks.map((f) => (
+                      <div key={f._id} className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                        <div className="p-5 border-b border-gray-100 bg-white">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h4 className="font-black text-zinc-950 text-base">{f.event?.title || 'Event Feedback'}</h4>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{f.event?.location || 'General Location'}</p>
+                            </div>
+                            <div className="flex items-center gap-1 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                              <Star size={12} className="text-amber-500 fill-amber-500" />
+                              <span className="text-xs font-black text-amber-700">{f.overall?.rating || '0'}</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
+                            "{f.overall?.comment || 'No comment provided.'}"
+                          </p>
+                        </div>
+                        
+                        <div className="p-5 space-y-4">
+                          <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                            <MessageCircle size={12} /> Conversation History
+                          </h5>
+                          
+                          <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center shrink-0 font-black text-[10px] text-white shadow-sm ring-2 ring-white">ORG</div>
+                            <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%]">
+                              <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                                {f.aiSuggestedReply || 'Thank you for your feedback! We will review it shortly.'}
+                              </p>
+                              <span className="text-[9px] text-gray-400 font-bold uppercase mt-2 block tracking-widest opacity-60">Organizer • Auto-Reply</span>
+                            </div>
+                          </div>
+
+                          {f.replies?.map((r, i) => (
+                            <div key={i} className={`flex gap-3 ${r.user === user.id ? 'flex-row-reverse' : ''}`}>
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-black text-[10px] text-white shadow-sm ring-2 ring-white ${r.user === user.id ? 'bg-zinc-950' : 'bg-amber-400'}`}>
+                                {r.user === user.id ? 'YOU' : 'ORG'}
+                              </div>
+                              <div className={`bg-white border border-gray-100 p-4 shadow-sm max-w-[85%] ${r.user === user.id ? 'rounded-2xl rounded-tr-none bg-amber-50/30' : 'rounded-2xl rounded-tl-none'}`}>
+                                <p className="text-sm text-gray-700 leading-relaxed">{r.message}</p>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase mt-2 block tracking-widest opacity-60 text-right">
+                                  {new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+
+                          <div className="mt-6 flex items-center gap-3">
+                            <input 
+                              type="text" 
+                              placeholder="Type your reply here..."
+                              className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 transition-all shadow-inner"
+                              value={replyTexts[f._id] || ''}
+                              onChange={(e) => setReplyTexts({ ...replyTexts, [f._id]: e.target.value })}
+                              onKeyPress={(e) => e.key === 'Enter' && handleReplySubmit(f._id)}
+                            />
+                            <button 
+                              onClick={() => handleReplySubmit(f._id)}
+                              disabled={!replyTexts[f._id]?.trim()}
+                              className="p-3 bg-amber-400 text-zinc-950 rounded-xl hover:bg-amber-300 transition-all shadow-md shadow-amber-100 disabled:opacity-50 disabled:grayscale"
+                            >
+                              <Send size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           </div>

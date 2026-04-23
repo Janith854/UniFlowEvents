@@ -93,8 +93,8 @@ export function Feedback() {
               </div>
             )}
           </section>
-
         </div>
+
         <FeedbackModal
           isOpen={isFormOpen}
           onClose={handleCloseForm}
