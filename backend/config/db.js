@@ -75,19 +75,40 @@ const seedDatabase = async () => {
 
 // ── Main DB Connect ─────────────────────────────────────────────────────────
 const connectDB = async () => {
-    const uri = process.env.MONGO_URI;
+    let uri = process.env.MONGO_URI;
 
-    if (!uri) {
-        throw new Error('MONGO_URI is not set in .env. Please add your MongoDB Atlas connection string.');
+    try {
+        if (!uri) throw new Error('No URI provided');
+        
+        console.log('🔌 Connecting to MongoDB Atlas...');
+        await mongoose.connect(uri, {
+            serverSelectionTimeoutMS: 5000, // Fail fast if Atlas is blocked
+            connectTimeoutMS: 5000,
+        });
+        console.log('🍃 MongoDB Atlas connected successfully');
+    } catch (atlasError) {
+        console.warn(`⚠️ Atlas connection failed (${atlasError.message}).`);
+        console.log('🔄 Falling back to local in-memory database (MongoMemoryServer)...');
+        
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+        const path = require('path');
+        const fs = require('fs');
+        
+        const dbPath = path.join('D:', 'uniflow_temp_db');
+        if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath, { recursive: true });
+
+        const mongoServer = await MongoMemoryServer.create({
+            instance: {
+                dbPath: dbPath,
+                storageEngine: 'ephemeralForTest'
+            }
+        });
+        uri = mongoServer.getUri();
+        
+        console.log('🔌 Connecting to fallback MongoDB...');
+        await mongoose.connect(uri);
+        console.log('🍃 Fallback In-Memory MongoDB connected successfully:', uri);
     }
-
-    console.log('🔌 Connecting to MongoDB Atlas...');
-    await mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 8000,
-        connectTimeoutMS: 10000,
-    });
-
-    console.log('🍃 MongoDB Atlas connected successfully');
 
     // Run seeding in background — server is ready IMMEDIATELY
     setImmediate(() => seedDatabase());
