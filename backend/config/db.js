@@ -94,7 +94,6 @@ const connectDB = async () => {
         console.log('🍃 Fallback In-Memory MongoDB connected successfully:', uri);
     }
 
->>>>>>> develop2
     // Run seeding in background — server is ready IMMEDIATELY
     setImmediate(() => seedDatabase());
 
