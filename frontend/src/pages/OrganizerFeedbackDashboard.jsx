@@ -219,14 +219,6 @@ export function OrganizerFeedbackDashboard() {
                 {showCharts ? 'Hide Analytics' : 'Show Analytics'}
               </button>
 
-              <button 
-                onClick={() => toast.success('Feedback data exported to CSV')}
-                className="bg-zinc-950 text-white px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
-              >
-                <Send size={16} className="rotate-45" />
-                Export CSV
-              </button>
-
               <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
                 <Filter size={16} className="text-gray-400" />
                 <select 
