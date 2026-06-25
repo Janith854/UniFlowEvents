@@ -1,0 +1,38 @@
+services:
+  # 1. MongoDB Database Service
+  database:
+    image: mongo:latest
+    container_name: uniflow_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 2. NodeJS Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: uniflow_backend
+    ports:
+      - "5002:5002"
+    environment:
+      - MONGO_URI=mongodb://database:27017/uniflowdb
+      - PORT=5002
+    depends_on:
+      - database
+
+  # 3. React Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: uniflow_frontend
+    ports:
+      - "3000:3000"
+    stdin_open: true # React app එක container එක ඇතුළේ crash නොවී දිවීමට
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
