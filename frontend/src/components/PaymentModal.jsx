@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Calendar, Lock, X, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export function PaymentModal({ isOpen, onClose, onConfirm, reservationData, amount = 1000 }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     cardNumber: '',
     expiry: '',
@@ -98,14 +100,20 @@ export function PaymentModal({ isOpen, onClose, onConfirm, reservationData, amou
       // Create reservation in backend first
       const data = await onConfirm();
       setIsSuccess(true);
-      
-      // Delay to show success state before closing/redirecting
+
+      // Use session ID directly — NEVER use data.url (it may point to wrong port)
+      // React Router navigate keeps us inside the running SPA on the correct port
       setTimeout(() => {
-        if (data && data.url) {
-          window.location.href = data.url;
-        } else {
-          // If no redirect URL, just leave it in success state briefly
-          // The parent component is responsible for closing the modal
+        if (data && data.id) {
+          navigate(`/parking/success?session_id=${data.id}`);
+        } else if (data && data.url) {
+          // Fallback: extract only the path + query — never follow the full URL
+          try {
+            const parsed = new URL(data.url);
+            navigate(parsed.pathname + parsed.search);
+          } catch {
+            navigate('/parking/success');
+          }
         }
       }, 2000);
     } catch (err) {

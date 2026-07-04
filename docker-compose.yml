@@ -19,6 +19,7 @@ services:
     environment:
       - MONGO_URI=mongodb://database:27017/uniflowdb
       - PORT=5002
+      - FRONTEND_URL=http://localhost:3000
     depends_on:
       - database
 
@@ -30,7 +31,7 @@ services:
     container_name: uniflow_frontend
     ports:
       - "3000:3000"
-    stdin_open: true # React app එක container එක ඇතුළේ crash නොවී දිවීමට
+    stdin_open: true # React app into container without crash
     depends_on:
       - backend
 

@@ -11,6 +11,7 @@ export function DigitalPass() {
   const sessionId = params.get('session_id');
   const [reservation, setReservation] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const passRef = useRef();
   const navigate = useNavigate();
 
@@ -18,8 +19,8 @@ export function DigitalPass() {
     if (sessionId) {
       handleConfirm();
     } else {
-        toast.error('Invalid Session');
-        navigate('/parking');
+      setError('No session ID found. Please complete a parking reservation first.');
+      setIsLoading(false);
     }
   }, [sessionId]);
 
@@ -28,7 +29,9 @@ export function DigitalPass() {
       const { data } = await confirmPayment(sessionId);
       setReservation(data);
     } catch (err) {
-      toast.error('Payment verification failed');
+      const msg = err.response?.data?.msg || 'Payment verification failed. The session may have expired.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -46,9 +49,37 @@ export function DigitalPass() {
     pdf.save(`ParkingPass_${reservation.slotNumber}.pdf`);
   };
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Verifying Payment...</div>;
+  if (isLoading) return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+      <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-zinc-700 font-bold text-lg">Verifying your payment...</p>
+      <p className="text-gray-400 text-sm">Please wait, do not close this page.</p>
+    </div>
+  );
 
-  if (!reservation) return <div className="min-h-screen flex items-center justify-center">No reservation found.</div>;
+  if (error || !reservation) return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-6 px-4">
+      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-10 max-w-md w-full text-center space-y-5">
+        <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto">
+          <svg className="w-10 h-10 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-zinc-950 tracking-tight">Session Expired</h2>
+          <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+            {error || 'Your parking session could not be verified. It may have expired or already been used.'}
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/parking')}
+          className="w-full bg-amber-400 text-zinc-950 font-black py-4 rounded-2xl hover:bg-amber-300 transition-all shadow-lg shadow-amber-200"
+        >
+          Return to Parking
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
