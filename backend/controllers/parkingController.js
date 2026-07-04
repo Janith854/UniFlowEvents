@@ -168,10 +168,11 @@ exports.getParkingAnalytics = async (req, res) => {
     try {
         // Find events created by this organizer
         const organizerEvents = await Event.find({ organizer: req.user.id }).select('_id');
-        const eventIds = organizerEvents.map((e) => e._id);
+        const mongoose = require('mongoose');
+        const eventObjectIds = organizerEvents.map((e) => new mongoose.Types.ObjectId(e._id));
 
         const stats = await ParkingReservation.aggregate([
-            { $match: { paymentStatus: 'Paid', event: { $in: eventIds } } },
+            { $match: { paymentStatus: 'Paid', event: { $in: eventObjectIds } } },
             { $group: { _id: '$zone', count: { $sum: 1 } } }
         ]);
 

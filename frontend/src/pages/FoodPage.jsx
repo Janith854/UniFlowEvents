@@ -178,8 +178,7 @@ export function FoodPage() {
 
   const addToCart = async (item) => {
     if (!hasTicket) {
-      setErrorMessage('Please register for an event before ordering food.');
-      setTimeout(() => setErrorMessage(''), 3000);
+      toast.error('Please register for an event before ordering food.');
       return;
     }
     if (item.stockCount <= 0) return;
@@ -250,7 +249,7 @@ export function FoodPage() {
 
   const handleCheckout = async () => {
     if (!hasTicket) {
-      setErrorMessage('Please register for an event before checking out.');
+      toast.error('Please register for an event before checking out.');
       return;
     }
     // ── Frontend guards ──────────────────────────────────────────────────────
